@@ -2,7 +2,6 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { usePathname } from "next/navigation";
 import {
   createContext,
@@ -21,12 +20,11 @@ import { useDataStream } from "@/components/chat/data-stream-provider";
 import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
-import { useAutoResume } from "@/hooks/use-auto-resume";
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import type { Vote } from "@/lib/db/schema";
+import { StubChatTransport } from "@/lib/chat-transport";
 import { ChatbotError } from "@/lib/errors";
-import type { ChatMessage } from "@/lib/types";
-import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { DEFAULT_CHAT_MODEL } from "@/lib/models";
+import type { ChatMessage, Vote } from "@/lib/types";
+import { fetcher, generateUUID } from "@/lib/utils";
 
 type ActiveChatContextValue = {
   chatId: string;
@@ -82,13 +80,12 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const [input, setInput] = useState("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
 
-  const { data: chatData, isLoading } = useSWR(
-    isNewChat
-      ? null
-      : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/messages?chatId=${chatId}`,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  // TODO(ACP): load persisted messages for existing chats from the agent
+  // backend. Expected shape: { messages: ChatMessage[]; visibility;
+  // isReadonly } (was: GET /api/messages?chatId=<id> when not a new chat).
+  const { data: chatData, isLoading } = useSWR(null, fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const initialMessages: ChatMessage[] = isNewChat
     ? []
@@ -104,7 +101,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     status,
     stop,
     regenerate,
-    resumeStream,
     addToolApprovalResponse,
   } = useChat<ChatMessage>({
     generateId: generateUUID,
@@ -118,9 +114,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
     },
     onError: (error) => {
-      if (error.message?.includes("AI Gateway requires a valid credit card")) {
-        setShowCreditCardAlert(true);
-      } else if (error instanceof ChatbotError) {
+      if (error instanceof ChatbotError) {
         toast({ description: error.message, type: "error" });
       } else {
         toast({
@@ -144,35 +138,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         ) ?? false
       );
     },
-    transport: new DefaultChatTransport({
-      api: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat`,
-      fetch: fetchWithErrorHandlers,
-      prepareSendMessagesRequest(request) {
-        const lastMessage = request.messages.at(-1);
-        const isToolApprovalContinuation =
-          lastMessage?.role !== "user" ||
-          request.messages.some((msg) =>
-            msg.parts?.some((part) => {
-              const { state } = part as { state?: string };
-              return (
-                state === "approval-responded" || state === "output-denied"
-              );
-            })
-          );
-
-        return {
-          body: {
-            id: request.id,
-            ...(isToolApprovalContinuation
-              ? { messages: request.messages }
-              : { message: lastMessage }),
-            selectedChatModel: currentModelIdRef.current,
-            selectedVisibilityType: visibility,
-            ...request.body,
-          },
-        };
-      },
-    }),
+    // TODO(ACP): replace StubChatTransport with a real agent transport.
+    // The removed backend transport (DefaultChatTransport on POST /api/chat)
+    // sent { id, message | messages, selectedChatModel:
+    // currentModelIdRef.current, selectedVisibilityType: visibility }, where
+    // the full messages array was sent only for tool-approval continuations
+    // (last message not from user, or any part in state "approval-responded"
+    // / "output-denied"); otherwise just the last message.
+    transport: new StubChatTransport(),
   });
 
   useEffect(() => {
@@ -208,7 +181,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   }, [chatId, isNewChat, setMessages]);
 
   useEffect(() => {
-    if (chatData && !isNewChat) {
+    if (!isNewChat) {
       const cookieModel = document.cookie
         .split("; ")
         .find((row) => row.startsWith("chat-model="))
@@ -217,7 +190,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         setCurrentModelId(decodeURIComponent(cookieModel));
       }
     }
-  }, [chatData, isNewChat]);
+  }, [isNewChat]);
 
   const hasAppendedQueryRef = useRef(false);
   useEffect(() => {
@@ -237,22 +210,13 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     }
   }, [sendMessage, chatId]);
 
-  useAutoResume({
-    autoResume: !isNewChat && !!chatData,
-    initialMessages,
-    resumeStream,
-    setMessages,
-  });
-
   const isReadonly = isNewChat ? false : (chatData?.isReadonly ?? false);
 
-  const { data: votes } = useSWR<Vote[]>(
-    !isReadonly && messages.length >= 2
-      ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`
-      : null,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  // TODO(ACP): load votes from the agent backend
+  // (was: GET /api/vote?chatId=<id> once a chat had 2+ messages).
+  const { data: votes } = useSWR<Vote[]>(null, fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const value = useMemo<ActiveChatContextValue>(
     () => ({

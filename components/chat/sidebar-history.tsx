@@ -3,7 +3,6 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
-import type { User } from "next-auth";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
@@ -24,7 +23,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { Chat } from "@/lib/db/schema";
+import type { AppUser, Chat } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
 import { ChatItem } from "./sidebar-history-item";
@@ -98,7 +97,7 @@ export function getChatHistoryPaginationKey(
   return `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
 }
 
-export function SidebarHistory({ user }: { user: User | undefined }) {
+export function SidebarHistory({ user }: { user: AppUser | undefined }) {
   const { setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const id = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : null;
@@ -110,7 +109,9 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     isLoading,
     mutate,
   } = useSWRInfinite<ChatHistory>(
-    user ? getChatHistoryPaginationKey : () => null,
+    // TODO(ACP): fetch chat history from the agent backend
+    // (was: user ? getChatHistoryPaginationKey : () => null).
+    () => null,
     fetcher,
     { fallbackData: [], revalidateOnFocus: false }
   );
@@ -146,10 +147,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
       }
     });
 
-    fetch(
-      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat?id=${chatToDelete}`,
-      { method: "DELETE" }
-    );
+    // TODO(ACP): delete the chat through the agent backend.
 
     toast.success("Chat deleted");
   }, [deleteId, mutate, pathname, router]);

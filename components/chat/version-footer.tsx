@@ -7,7 +7,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { Document } from "@/lib/db/schema";
+import type { Document } from "@/lib/types";
 import { cn, getDocumentTimestampByIndex } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
 
@@ -55,34 +55,19 @@ export const VersionFooter = ({
     setIsMutating(true);
 
     try {
+      // TODO(ACP): restore the version through the agent backend
+      // (was: DELETE /api/document?id=<id>&timestamp=<ts>).
       await mutate(
         `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/document?id=${artifact.documentId}`,
-        await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/document?id=${artifact.documentId}&timestamp=${getDocumentTimestampByIndex(
-            documents,
-            currentVersionIndex
-          )}`,
-          {
-            method: "DELETE",
-          }
+        documents.filter((document) =>
+          isAfter(
+            new Date(document.createdAt),
+            new Date(
+              getDocumentTimestampByIndex(documents, currentVersionIndex)
+            )
+          )
         ),
-        {
-          optimisticData: documents
-            ? [
-                ...documents.filter((document) =>
-                  isAfter(
-                    new Date(document.createdAt),
-                    new Date(
-                      getDocumentTimestampByIndex(
-                        documents,
-                        currentVersionIndex
-                      )
-                    )
-                  )
-                ),
-              ]
-            : [],
-        }
+        { revalidate: false }
       );
     } finally {
       setIsMutating(false);

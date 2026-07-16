@@ -3,8 +3,7 @@ import { memo, useCallback } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
-import type { Vote } from "@/lib/db/schema";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, Vote } from "@/lib/types";
 import {
   MessageAction as Action,
   MessageActions as Actions,
@@ -44,93 +43,61 @@ export function PureMessageActions({
   }, [copyToClipboard, textFromParts]);
 
   const handleUpvote = useCallback(() => {
-    const upvote = fetch(
-      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote`,
-      {
-        body: JSON.stringify({
-          chatId,
-          messageId: message.id,
-          type: "up",
-        }),
-        method: "PATCH",
-      }
-    );
+    // TODO(ACP): persist the vote through the agent backend
+    // (was: PATCH /api/vote with { chatId, messageId, type: "up" }).
+    mutate<Vote[]>(
+      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
+      (currentVotes) => {
+        if (!currentVotes) {
+          return [];
+        }
 
-    toast.promise(upvote, {
-      error: "Failed to upvote response.",
-      loading: "Upvoting Response...",
-      success: () => {
-        mutate<Vote[]>(
-          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
-          (currentVotes) => {
-            if (!currentVotes) {
-              return [];
-            }
-
-            const votesWithoutCurrent = currentVotes.filter(
-              (currentVote) => currentVote.messageId !== message.id
-            );
-
-            return [
-              ...votesWithoutCurrent,
-              {
-                chatId,
-                isUpvoted: true,
-                messageId: message.id,
-              },
-            ];
-          },
-          { revalidate: false }
+        const votesWithoutCurrent = currentVotes.filter(
+          (currentVote) => currentVote.messageId !== message.id
         );
 
-        return "Upvoted Response!";
+        return [
+          ...votesWithoutCurrent,
+          {
+            chatId,
+            isUpvoted: true,
+            messageId: message.id,
+          },
+        ];
       },
-    });
+      { revalidate: false }
+    );
+
+    toast.success("Upvoted Response!");
   }, [chatId, message.id, mutate]);
 
   const handleDownvote = useCallback(() => {
-    const downvote = fetch(
-      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote`,
-      {
-        body: JSON.stringify({
-          chatId,
-          messageId: message.id,
-          type: "down",
-        }),
-        method: "PATCH",
-      }
-    );
+    // TODO(ACP): persist the vote through the agent backend
+    // (was: PATCH /api/vote with { chatId, messageId, type: "down" }).
+    mutate<Vote[]>(
+      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
+      (currentVotes) => {
+        if (!currentVotes) {
+          return [];
+        }
 
-    toast.promise(downvote, {
-      error: "Failed to downvote response.",
-      loading: "Downvoting Response...",
-      success: () => {
-        mutate<Vote[]>(
-          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
-          (currentVotes) => {
-            if (!currentVotes) {
-              return [];
-            }
-
-            const votesWithoutCurrent = currentVotes.filter(
-              (currentVote) => currentVote.messageId !== message.id
-            );
-
-            return [
-              ...votesWithoutCurrent,
-              {
-                chatId,
-                isUpvoted: false,
-                messageId: message.id,
-              },
-            ];
-          },
-          { revalidate: false }
+        const votesWithoutCurrent = currentVotes.filter(
+          (currentVote) => currentVote.messageId !== message.id
         );
 
-        return "Downvoted Response!";
+        return [
+          ...votesWithoutCurrent,
+          {
+            chatId,
+            isUpvoted: false,
+            messageId: message.id,
+          },
+        ];
       },
-    });
+      { revalidate: false }
+    );
+
+    toast.success("Downvoted Response!");
   }, [chatId, message.id, mutate]);
 
   if (isLoading) {

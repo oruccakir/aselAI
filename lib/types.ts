@@ -1,11 +1,7 @@
-import type { InferUITool, UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/chat/artifact";
-import type { createDocument } from "./ai/tools/create-document";
-import type { getWeather } from "./ai/tools/get-weather";
-import type { requestSuggestions } from "./ai/tools/request-suggestions";
-import type { updateDocument } from "./ai/tools/update-document";
-import type { Suggestion } from "./db/schema";
+import type { WeatherAtLocation } from "@/components/chat/weather";
 
 export const messageMetadataSchema = z.object({
   createdAt: z.string(),
@@ -13,18 +9,83 @@ export const messageMetadataSchema = z.object({
 
 export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 
-type weatherTool = InferUITool<typeof getWeather>;
-type createDocumentTool = InferUITool<ReturnType<typeof createDocument>>;
-type updateDocumentTool = InferUITool<ReturnType<typeof updateDocument>>;
-type requestSuggestionsTool = InferUITool<
-  ReturnType<typeof requestSuggestions>
->;
+// Plain replacements for the former Drizzle-inferred types (lib/db/schema.ts).
+// TODO(ACP): these shapes should eventually come from the agent protocol.
+export type AppUser = {
+  id: string;
+  email: string;
+  name?: string | null;
+  image?: string | null;
+};
 
+export type Chat = {
+  id: string;
+  createdAt: Date;
+  title: string;
+  userId: string;
+  visibility: "public" | "private";
+};
+
+export type DBMessage = {
+  id: string;
+  chatId: string;
+  role: string;
+  parts: unknown;
+  attachments: unknown;
+  createdAt: Date;
+};
+
+export type Vote = {
+  chatId: string;
+  messageId: string;
+  isUpvoted: boolean;
+};
+
+export type Document = {
+  id: string;
+  createdAt: Date;
+  title: string;
+  content: string | null;
+  kind: ArtifactKind;
+  userId: string;
+};
+
+export type Suggestion = {
+  id: string;
+  documentId: string;
+  documentCreatedAt: Date;
+  originalText: string;
+  suggestedText: string;
+  description: string | null;
+  isResolved: boolean;
+  userId: string;
+  createdAt: Date;
+};
+
+// Inlined from the former lib/ai/tools/* definitions (InferUITool shapes).
 export type ChatTools = {
-  getWeather: weatherTool;
-  createDocument: createDocumentTool;
-  updateDocument: updateDocumentTool;
-  requestSuggestions: requestSuggestionsTool;
+  getWeather: {
+    input: { city?: string; latitude?: number; longitude?: number };
+    output: WeatherAtLocation;
+  };
+  createDocument: {
+    input: { title: string; kind: ArtifactKind };
+    output:
+      | { id: string; title: string; kind: ArtifactKind; content: string }
+      | { error: string };
+  };
+  updateDocument: {
+    input: { id: string; description: string };
+    output:
+      | { id: string; title: string; kind: ArtifactKind; content: string }
+      | { error: string };
+  };
+  requestSuggestions: {
+    input: { documentId: string };
+    output:
+      | { id: string; title: string; kind: ArtifactKind; message: string }
+      | { error: string };
+  };
 };
 
 export type WaitingStatusData = {

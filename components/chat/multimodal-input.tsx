@@ -24,7 +24,6 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import useSWR from "swr";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import {
   ModelSelector,
@@ -42,7 +41,8 @@ import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   type ModelCapabilities,
-} from "@/lib/ai/models";
+  modelCapabilities,
+} from "@/lib/models";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -192,10 +192,7 @@ function PureMultimodalInput({
             action: {
               label: "Delete",
               onClick: () => {
-                fetch(
-                  `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat?id=${chatId}`,
-                  { method: "DELETE" }
-                );
+                // TODO(ACP): delete the chat through the agent backend.
                 router.push("/");
                 toast.success("Chat deleted");
               },
@@ -207,12 +204,7 @@ function PureMultimodalInput({
             action: {
               label: "Delete all",
               onClick: () => {
-                fetch(
-                  `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history`,
-                  {
-                    method: "DELETE",
-                  }
-                );
+                // TODO(ACP): delete all chats through the agent backend.
                 router.push("/");
                 toast.success("All chats deleted");
               },
@@ -223,7 +215,7 @@ function PureMultimodalInput({
           break;
       }
     },
-    [chatId, resolvedTheme, router, setInput, setMessages, setTheme]
+    [resolvedTheme, router, setInput, setMessages, setTheme]
   );
 
   const submitForm = useCallback(() => {
@@ -267,35 +259,15 @@ function PureMultimodalInput({
     chatId,
   ]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/files/upload`,
-        {
-          body: formData,
-          method: "POST",
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          contentType,
-          name: pathname,
-          url,
-        };
-      }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch {
-      toast.error("Failed to upload file, please try again!");
-    }
-  }, []);
+  const uploadFile = useCallback(
+    (_file: File): Promise<Attachment | undefined> => {
+      // TODO(ACP): upload attachments through the agent backend
+      // (was: POST /api/files/upload → { url, pathname, contentType }).
+      toast.error("Attachments are disabled");
+      return Promise.resolve(undefined);
+    },
+    []
+  );
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -644,15 +616,9 @@ function PureAttachmentsButton({
   status: UseChatHelpers<ChatMessage>["status"];
   selectedModelId: string;
 }) {
-  const { data: modelsResponse } = useSWR(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    (url: string) => fetch(url).then((r) => r.json()),
-    { dedupingInterval: 3_600_000, revalidateOnFocus: false }
-  );
-
-  const caps: Record<string, ModelCapabilities> | undefined =
-    modelsResponse?.capabilities ?? modelsResponse;
-  const hasVision = caps?.[selectedModelId]?.vision ?? false;
+  // TODO(ACP): capabilities should come from the connected agent
+  // (was: GET /api/models).
+  const hasVision = modelCapabilities[selectedModelId]?.vision ?? false;
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
@@ -791,16 +757,10 @@ function PureModelSelectorCompact({
   onModelChange?: (modelId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const { data: modelsData } = useSWR(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    (url: string) => fetch(url).then((r) => r.json()),
-    { dedupingInterval: 3_600_000, revalidateOnFocus: false }
-  );
-
-  const capabilities: Record<string, ModelCapabilities> | undefined =
-    modelsData?.capabilities ?? modelsData;
-  const dynamicModels: ChatModel[] | undefined = modelsData?.models;
-  const activeModels = dynamicModels ?? chatModels;
+  // TODO(ACP): model list and capabilities should come from the connected
+  // agent (was: GET /api/models).
+  const capabilities = modelCapabilities;
+  const activeModels = chatModels;
 
   const selectedModel =
     activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
@@ -825,12 +785,7 @@ function PureModelSelectorCompact({
         <ModelSelectorList>
           {(() => {
             const curatedIds = new Set(chatModels.map((m) => m.id));
-            const allModels = dynamicModels
-              ? [
-                  ...chatModels,
-                  ...dynamicModels.filter((m) => !curatedIds.has(m.id)),
-                ]
-              : chatModels;
+            const allModels = chatModels;
 
             const grouped: Record<
               string,

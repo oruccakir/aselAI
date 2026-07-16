@@ -1,10 +1,9 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { deleteTrailingMessages } from "@/app/(chat)/actions";
 import type { ChatMessage } from "@/lib/types";
 
-export async function submitEditedMessage({
+export function submitEditedMessage({
   message,
   text,
   setMessages,
@@ -15,8 +14,9 @@ export async function submitEditedMessage({
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
 }) {
-  await deleteTrailingMessages({ id: message.id });
-
+  // TODO(ACP): delete trailing messages server-side through the agent
+  // backend (was: deleteTrailingMessages server action). The local
+  // truncation below keeps the client state consistent.
   setMessages((messages) => {
     const index = messages.findIndex((m) => m.id === message.id);
     if (index === -1) {

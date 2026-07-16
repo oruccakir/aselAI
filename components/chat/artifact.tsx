@@ -18,8 +18,7 @@ import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { Document, Vote } from "@/lib/db/schema";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment, ChatMessage, Document, Vote } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
 import { useSidebar } from "../ui/sidebar";
 import { ArtifactActions } from "./artifact-actions";
@@ -94,9 +93,9 @@ function PureArtifact({
     isLoading: isDocumentsFetching,
     mutate: mutateDocuments,
   } = useSWR<Document[]>(
-    artifact.documentId !== "init" && artifact.status !== "streaming"
-      ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/document?id=${artifact.documentId}`
-      : null,
+    // TODO(ACP): load document versions from the agent backend
+    // (was: GET /api/document?id=<documentId> once streaming finished).
+    null,
     fetcher
   );
 
@@ -155,7 +154,7 @@ function PureArtifact({
 
       mutate<Document[]>(
         `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/document?id=${artifact.documentId}`,
-        async (currentDocuments) => {
+        (currentDocuments) => {
           if (!currentDocuments) {
             return [];
           }
@@ -172,19 +171,9 @@ function PureArtifact({
             return currentDocuments;
           }
 
-          await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/document?id=${artifact.documentId}`,
-            {
-              body: JSON.stringify({
-                content: updatedContent,
-                isManualEdit: true,
-                kind: artifact.kind,
-                title: artifact.title,
-              }),
-              method: "POST",
-            }
-          );
-
+          // TODO(ACP): persist the edit through the agent backend
+          // (was: POST /api/document?id=<id> with { content, isManualEdit,
+          // kind, title }). Edits currently live only in SWR cache memory.
           setIsContentDirty(false);
 
           return currentDocuments.map((doc, i) =>

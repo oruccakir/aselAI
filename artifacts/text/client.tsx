@@ -11,8 +11,7 @@ import {
   UndoIcon,
 } from "@/components/chat/icons";
 import { Editor } from "@/components/chat/text-editor";
-import type { Suggestion } from "@/lib/db/schema";
-import { getSuggestions } from "../actions";
+import type { Suggestion } from "@/lib/types";
 
 type TextArtifactMetadata = {
   suggestions: Suggestion[];
@@ -118,8 +117,10 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     );
   },
   description: "Useful for text content, like drafting essays and emails.",
-  initialize: async ({ documentId, setMetadata }) => {
-    const suggestions = await getSuggestions({ documentId });
+  initialize: ({ setMetadata }) => {
+    // TODO(ACP): fetch stored suggestions from the agent backend
+    // (was: getSuggestions server action → GET by documentId).
+    const suggestions: Suggestion[] = [];
 
     setMetadata({
       suggestions,

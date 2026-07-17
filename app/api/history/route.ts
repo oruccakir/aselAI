@@ -6,7 +6,6 @@ import { ChatbotError } from "@/lib/errors";
 import type { Chat } from "@/lib/types";
 
 // Talks to the ACP child process — must run on the Node.js runtime.
-export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

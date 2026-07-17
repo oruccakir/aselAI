@@ -12,8 +12,9 @@ import { createAcpUiStreamMapper } from "@/lib/acp/ui-stream";
 import { ChatbotError } from "@/lib/errors";
 import { DEFAULT_CHAT_MODEL } from "@/lib/models";
 
-// Spawns/talks to the ACP child process — must run on the Node.js runtime.
-export const runtime = "nodejs";
+// Talks to the ACP child process (node:child_process) — Node.js runtime
+// (the default for route handlers; the "runtime" segment export is
+// incompatible with cacheComponents).
 export const maxDuration = 300;
 
 const postRequestBodySchema = z.object({

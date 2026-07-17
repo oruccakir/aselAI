@@ -710,6 +710,8 @@ function ModelSelectorOption({
           ? "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
           : "cursor-not-allowed opacity-40 data-[selected=true]:bg-transparent data-[selected=true]:opacity-60 data-[selected=true]:ring-1 data-[selected=true]:ring-muted-foreground/30 data-[selected=true]:ring-inset"
       )}
+      // cmdk filters on `value` (the agent id); make display names findable.
+      keywords={[model.name, model.provider]}
       onSelect={handleSelect}
       value={model.id}
     >

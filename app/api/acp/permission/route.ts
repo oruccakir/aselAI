@@ -3,7 +3,6 @@ import { resolveAcpPermissionByDecision } from "@/lib/acp/client";
 import { ChatbotError } from "@/lib/errors";
 
 // Resolves permission requests held by the ACP child process — Node.js only.
-export const runtime = "nodejs";
 
 const postRequestBodySchema = z.object({
   approved: z.boolean(),

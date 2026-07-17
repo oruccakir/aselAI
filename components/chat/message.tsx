@@ -305,7 +305,7 @@ const PurePreviewMessage = ({
 
       return (
         <div className={widthClass} key={toolCallId}>
-          <Tool className="w-full" defaultOpen={state === "approval-requested"}>
+          <Tool className="w-full" defaultOpen={true}>
             <ToolHeader state={state} toolName={toolName} type="dynamic-tool" />
             <ToolContent>
               {part.input !== undefined && part.input !== null && (

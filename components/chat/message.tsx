@@ -38,26 +38,42 @@ function WaitingText() {
   );
 }
 
+function resolveAcpPermission(approvalId: string, approved: boolean) {
+  // The agent's turn is blocked on this answer inside the original,
+  // still-open /api/chat stream — the decision travels out-of-band.
+  fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/acp/permission`, {
+    body: JSON.stringify({ approved, requestId: approvalId }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  }).catch(() => {
+    // The 55s server-side timeout auto-denies if this never arrives.
+  });
+}
+
 function ToolApprovalActions({
   addToolApprovalResponse,
   approvalId,
+  toolName,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   approvalId: string;
+  toolName: string;
 }) {
   const handleDeny = useCallback(() => {
     addToolApprovalResponse({
       approved: false,
       id: approvalId,
-      reason: "User denied weather lookup",
+      reason: `User denied ${toolName}`,
     });
-  }, [addToolApprovalResponse, approvalId]);
+    resolveAcpPermission(approvalId, false);
+  }, [addToolApprovalResponse, approvalId, toolName]);
 
   const handleAllow = useCallback(() => {
     addToolApprovalResponse({
       approved: true,
       id: approvalId,
     });
+    resolveAcpPermission(approvalId, true);
   }, [addToolApprovalResponse, approvalId]);
 
   return (
@@ -118,7 +134,8 @@ const PurePreviewMessage = ({
       (part.type === "reasoning" &&
         "text" in part &&
         part.text?.trim().length > 0) ||
-      part.type.startsWith("tool-")
+      part.type.startsWith("tool-") ||
+      part.type === "dynamic-tool"
   );
   const isThinking = isAssistant && isLoading && !hasAnyContent;
 
@@ -246,6 +263,69 @@ const PurePreviewMessage = ({
                 <ToolApprovalActions
                   addToolApprovalResponse={addToolApprovalResponse}
                   approvalId={approvalId}
+                  toolName="weather lookup"
+                />
+              )}
+            </ToolContent>
+          </Tool>
+        </div>
+      );
+    }
+
+    if (type === "dynamic-tool") {
+      // Agent-defined tools (any Hermes skill, MCP server or sub-agent)
+      // arrive as dynamic parts — name, input and output come from the
+      // payload, so new tools render with no code change here.
+      const { toolCallId, state } = part;
+      const toolName = part.title ?? part.toolName;
+      const approvalId = part.approval?.id;
+      const isDenied =
+        state === "output-denied" ||
+        (state === "approval-responded" && part.approval?.approved === false);
+      const widthClass = "w-[min(100%,450px)]";
+
+      if (isDenied) {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool className="w-full" defaultOpen={true}>
+              <ToolHeader
+                state="output-denied"
+                toolName={toolName}
+                type="dynamic-tool"
+              />
+              <ToolContent>
+                <div className="px-4 py-3 text-muted-foreground text-sm">
+                  {toolName} was denied.
+                </div>
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      return (
+        <div className={widthClass} key={toolCallId}>
+          <Tool className="w-full" defaultOpen={state === "approval-requested"}>
+            <ToolHeader state={state} toolName={toolName} type="dynamic-tool" />
+            <ToolContent>
+              {part.input !== undefined && part.input !== null && (
+                <ToolInput input={part.input} />
+              )}
+              {state === "approval-requested" && approvalId && (
+                <ToolApprovalActions
+                  addToolApprovalResponse={addToolApprovalResponse}
+                  approvalId={approvalId}
+                  toolName={toolName}
+                />
+              )}
+              {(state === "output-available" || state === "output-error") && (
+                <ToolOutput
+                  errorText={
+                    state === "output-error" ? part.errorText : undefined
+                  }
+                  output={
+                    state === "output-available" ? part.output : undefined
+                  }
                 />
               )}
             </ToolContent>

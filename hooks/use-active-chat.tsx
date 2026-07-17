@@ -2,6 +2,7 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { usePathname } from "next/navigation";
 import {
   createContext,
@@ -17,14 +18,13 @@ import {
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { useDataStream } from "@/components/chat/data-stream-provider";
-import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
-import { StubChatTransport } from "@/lib/chat-transport";
+import { getChatHistoryPaginationKey } from "@/lib/chat-history";
 import { ChatbotError } from "@/lib/errors";
 import { DEFAULT_CHAT_MODEL } from "@/lib/models";
 import type { ChatMessage, Vote } from "@/lib/types";
-import { fetcher, generateUUID } from "@/lib/utils";
+import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
 type ActiveChatContextValue = {
   chatId: string;
@@ -60,16 +60,35 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const { mutate } = useSWRConfig();
 
   const chatIdFromUrl = extractChatId(pathname);
-  const isNewChat = !chatIdFromUrl;
   const newChatIdRef = useRef(generateUUID());
   const prevPathnameRef = useRef(pathname);
 
-  if (isNewChat && prevPathnameRef.current !== pathname) {
-    newChatIdRef.current = generateUUID();
+  // Once /api/chat creates the real ACP session, it streams back the
+  // composite `<agentId>:<sessionId>` chat id. The transport reads this ref
+  // at send time so the second message continues the SAME session instead
+  // of creating a new one per send.
+  const resolvedChatIdRef = useRef<string | null>(null);
+
+  if (prevPathnameRef.current !== pathname) {
+    if (!chatIdFromUrl) {
+      newChatIdRef.current = generateUUID();
+    }
+    if (!chatIdFromUrl || chatIdFromUrl !== resolvedChatIdRef.current) {
+      // Navigated to a different chat — the resolved id belongs to the old one.
+      resolvedChatIdRef.current = null;
+    }
   }
   prevPathnameRef.current = pathname;
 
-  const chatId = chatIdFromUrl ?? newChatIdRef.current;
+  // When the URL was just rewritten to the composite id THIS chat resolved,
+  // it is still the same live conversation: keep the stable client-side id
+  // so useChat does not remount (and drop the stream) mid-turn. usePathname
+  // tracks native history.replaceState in Next 16, so without this guard
+  // the id change would reset the chat right after the first send.
+  const isLiveResolvedChat =
+    chatIdFromUrl !== null && chatIdFromUrl === resolvedChatIdRef.current;
+  const isNewChat = !chatIdFromUrl || isLiveResolvedChat;
+  const chatId = isNewChat ? newChatIdRef.current : (chatIdFromUrl as string);
 
   const [currentModelId, setCurrentModelId] = useState(DEFAULT_CHAT_MODEL);
   const currentModelIdRef = useRef(currentModelId);
@@ -80,12 +99,36 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const [input, setInput] = useState("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
 
-  // TODO(ACP): load persisted messages for existing chats from the agent
-  // backend. Expected shape: { messages: ChatMessage[]; visibility;
-  // isReadonly } (was: GET /api/messages?chatId=<id> when not a new chat).
-  const { data: chatData, isLoading } = useSWR(null, fetcher, {
-    revalidateOnFocus: false,
-  });
+  // The transport is memoized once; everything mutable it needs at send
+  // time (selected agent, resolved chat id) is read through refs.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<ChatMessage>({
+        api: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat`,
+        fetch: fetchWithErrorHandlers,
+        prepareSendMessagesRequest(request) {
+          return {
+            body: {
+              agentId: currentModelIdRef.current,
+              id: resolvedChatIdRef.current ?? request.id,
+              message: request.messages.at(-1),
+              ...request.body,
+            },
+          };
+        },
+      }),
+    []
+  );
+
+  // Load persisted messages only for cold-opened session chats (composite
+  // ids contain a colon; bare UUIDs never had a session to load).
+  const { data: chatData, isLoading } = useSWR(
+    !isNewChat && chatId.includes(":")
+      ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/messages?chatId=${encodeURIComponent(chatId)}`
+      : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
   const initialMessages: ChatMessage[] = isNewChat
     ? []
@@ -107,6 +150,19 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     id: chatId,
     messages: initialMessages,
     onData: (dataPart) => {
+      if (dataPart.type === "data-session-id") {
+        // First send of a new chat: the server created the ACP session and
+        // sent back the composite chat id. Remember it for every subsequent
+        // send and rewrite the URL (replaceState does not remount the
+        // provider — proven by the ?query= effect below).
+        resolvedChatIdRef.current = dataPart.data;
+        window.history.replaceState(
+          {},
+          "",
+          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${dataPart.data}`
+        );
+        return;
+      }
       if (dataPart.type === "data-waiting-status") {
         setWaitingStatus(dataPart.data);
         return;
@@ -124,28 +180,16 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       }
     },
     onFinish: () => {
-      mutate(unstable_serialize(getChatHistoryPaginationKey));
-    },
-    sendAutomaticallyWhen: ({ messages: currentMessages }) => {
-      const lastMessage = currentMessages.at(-1);
-      return (
-        lastMessage?.parts?.some(
-          (part) =>
-            "state" in part &&
-            part.state === "approval-responded" &&
-            "approval" in part &&
-            (part.approval as { approved?: boolean })?.approved === true
-        ) ?? false
+      mutate(
+        unstable_serialize(
+          getChatHistoryPaginationKey(currentModelIdRef.current)
+        )
       );
     },
-    // TODO(ACP): replace StubChatTransport with a real agent transport.
-    // The removed backend transport (DefaultChatTransport on POST /api/chat)
-    // sent { id, message | messages, selectedChatModel:
-    // currentModelIdRef.current, selectedVisibilityType: visibility }, where
-    // the full messages array was sent only for tool-approval continuations
-    // (last message not from user, or any part in state "approval-responded"
-    // / "output-denied"); otherwise just the last message.
-    transport: new StubChatTransport(),
+    // No sendAutomaticallyWhen: permission answers travel out-of-band via
+    // POST /api/acp/permission while the original stream stays open, so a
+    // second concurrent stream on the same chat must never be started.
+    transport,
   });
 
   useEffect(() => {

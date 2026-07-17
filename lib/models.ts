@@ -1,4 +1,4 @@
-export const DEFAULT_CHAT_MODEL = "moonshotai/kimi-k2.5";
+import { ACP_AGENTS } from "./acp/agents";
 
 export type ModelCapabilities = {
   tools: boolean;
@@ -14,47 +14,22 @@ export type ChatModel = {
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
 };
 
-export const chatModels: ChatModel[] = [
-  {
-    description: "Fast and capable model with tool use",
-    id: "deepseek/deepseek-v3.2",
-    name: "DeepSeek V3.2",
-    provider: "deepseek",
-  },
-  {
-    description: "Moonshot AI flagship model",
-    id: "moonshotai/kimi-k2.5",
-    name: "Kimi K2.5",
-    provider: "moonshotai",
-  },
-  {
-    description: "Compact reasoning model",
-    id: "openai/gpt-oss-20b",
-    name: "GPT OSS 20B",
-    provider: "openai",
-    reasoningEffort: "low",
-  },
-  {
-    description: "Open-source 120B parameter model",
-    id: "openai/gpt-oss-120b",
-    name: "GPT OSS 120B",
-    provider: "openai",
-    reasoningEffort: "low",
-  },
-  {
-    description: "Fast non-reasoning model with tool use",
-    id: "xai/grok-4.1-fast-non-reasoning",
-    name: "Grok 4.1 Fast",
-    provider: "xai",
-  },
-];
+// The "model" picker is the ACP agent picker: one entry per registry agent.
+export const chatModels: ChatModel[] = ACP_AGENTS.map((agent) => ({
+  description: agent.description,
+  id: agent.id,
+  name: agent.label,
+  provider: "acp",
+}));
 
-// TODO(ACP): capabilities should come from the connected agent. All-false
-// keeps capability-gated UI (attachments, reasoning effort) disabled.
+export const DEFAULT_CHAT_MODEL: string = ACP_AGENTS[0].id;
+
+// Tools must be true or the approval/tool UI is gated off at the picker
+// level. Vision stays false until attachments go through the agent.
 export const modelCapabilities: Record<string, ModelCapabilities> =
   Object.fromEntries(
-    chatModels.map((model) => [
-      model.id,
-      { reasoning: false, tools: false, vision: false },
+    ACP_AGENTS.map((agent) => [
+      agent.id,
+      { reasoning: true, tools: true, vision: false },
     ])
   );

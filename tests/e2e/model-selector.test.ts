@@ -22,11 +22,9 @@ test.describe("Model Selector", () => {
     await modelButton.click();
 
     const searchInput = page.getByPlaceholder("Search models...");
-    await searchInput.fill("DeepSeek");
+    await searchInput.fill("Hermes");
 
-    await expect(
-      page.getByRole("option", { name: /DeepSeek V3\.2/ })
-    ).toBeVisible();
+    await expect(page.getByRole("option", { name: /Hermes/ })).toBeVisible();
   });
 
   test("can close model selector by clicking outside", async ({ page }) => {
@@ -47,20 +45,17 @@ test.describe("Model Selector", () => {
     const availableModels = page.getByRole("group", { name: "Available" });
     await expect(availableModels).toBeVisible();
     await expect(
-      availableModels.getByRole("option", { name: /DeepSeek V3\.2/ })
-    ).toBeVisible();
-    await expect(
-      availableModels.getByRole("option", { name: /Kimi K2\.5/ })
+      availableModels.getByRole("option", { name: /Hermes/ })
     ).toBeVisible();
   });
 
-  test("can select a different model", async ({ page }) => {
+  test("can select a model", async ({ page }) => {
     const modelButton = page.getByTestId("model-selector");
     await modelButton.click();
 
-    await page.getByRole("option", { name: /DeepSeek V3\.2/ }).click();
+    await page.getByRole("option", { name: /Hermes/ }).click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
-    await expect(modelButton).toContainText("DeepSeek V3.2");
+    await expect(modelButton).toContainText("Hermes");
   });
 });

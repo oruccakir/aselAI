@@ -3,13 +3,15 @@
 import { useEffect } from "react";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { useActiveChat } from "@/hooks/use-active-chat";
 import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
+import { getChatHistoryPaginationKey } from "@/lib/chat-history";
 import { artifactDefinitions } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
-import { getChatHistoryPaginationKey } from "./sidebar-history";
 
 export function DataStreamHandler() {
   const { dataStream, setDataStream } = useDataStream();
+  const { currentModelId } = useActiveChat();
   const { mutate } = useSWRConfig();
 
   const { artifact, setArtifact, setMetadata } = useArtifact();
@@ -24,7 +26,7 @@ export function DataStreamHandler() {
 
     for (const delta of newDeltas) {
       if (delta.type === "data-chat-title") {
-        mutate(unstable_serialize(getChatHistoryPaginationKey));
+        mutate(unstable_serialize(getChatHistoryPaginationKey(currentModelId)));
         continue;
       }
       const artifactDefinition = artifactDefinitions.find(
@@ -85,7 +87,15 @@ export function DataStreamHandler() {
         }
       });
     }
-  }, [dataStream, setArtifact, setMetadata, artifact, setDataStream, mutate]);
+  }, [
+    dataStream,
+    setArtifact,
+    setMetadata,
+    artifact,
+    setDataStream,
+    mutate,
+    currentModelId,
+  ]);
 
   return null;
 }

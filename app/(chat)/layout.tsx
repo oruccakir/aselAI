@@ -33,24 +33,26 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 
   return (
-    <SidebarProvider defaultOpen={!isCollapsed}>
-      <AppSidebar user={STUB_USER} />
-      <SidebarInset>
-        <Toaster
-          position="top-center"
-          theme="system"
-          toastOptions={{
-            className:
-              "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-          }}
-        />
-        <Suspense fallback={<div className="flex h-dvh" />}>
-          <ActiveChatProvider>
+    // ActiveChatProvider wraps the sidebar too, so the history list can
+    // read the selected agent and stay in sync with the picker.
+    <ActiveChatProvider>
+      <SidebarProvider defaultOpen={!isCollapsed}>
+        <AppSidebar user={STUB_USER} />
+        <SidebarInset>
+          <Toaster
+            position="top-center"
+            theme="system"
+            toastOptions={{
+              className:
+                "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
+            }}
+          />
+          <Suspense fallback={<div className="flex h-dvh" />}>
             <ChatShell />
-          </ActiveChatProvider>
-        </Suspense>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+          </Suspense>
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </ActiveChatProvider>
   );
 }

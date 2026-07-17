@@ -3,11 +3,12 @@
 import { useMemo } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import type { VisibilityType } from "@/components/chat/visibility-selector";
+import { useActiveChat } from "@/hooks/use-active-chat";
 import {
   type ChatHistory,
   getChatHistoryPaginationKey,
-} from "@/components/chat/sidebar-history";
-import type { VisibilityType } from "@/components/chat/visibility-selector";
+} from "@/lib/chat-history";
 
 export function useChatVisibility({
   chatId,
@@ -17,6 +18,7 @@ export function useChatVisibility({
   initialVisibilityType: VisibilityType;
 }) {
   const { mutate, cache } = useSWRConfig();
+  const { currentModelId } = useActiveChat();
   const history: ChatHistory = cache.get(
     `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history`
   )?.data;
@@ -42,7 +44,7 @@ export function useChatVisibility({
 
   const setVisibilityType = (updatedVisibilityType: VisibilityType) => {
     setLocalVisibility(updatedVisibilityType);
-    mutate(unstable_serialize(getChatHistoryPaginationKey));
+    mutate(unstable_serialize(getChatHistoryPaginationKey(currentModelId)));
 
     // TODO(ACP): persist the visibility change through the agent backend.
   };

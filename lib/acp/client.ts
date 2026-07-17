@@ -130,7 +130,11 @@ export class AcpAgentClient {
     (update: AcpUpdate) => void
   >();
 
-  constructor(private readonly spec: AcpSpawnSpec) {}
+  private readonly spec: AcpSpawnSpec;
+
+  constructor(spec: AcpSpawnSpec) {
+    this.spec = spec;
+  }
 
   // ---- process lifecycle -------------------------------------------------
 
@@ -188,7 +192,8 @@ export class AcpAgentClient {
     method: string,
     params: Record<string, unknown>
   ): Promise<T> {
-    const id = this.nextId++;
+    const id = this.nextId;
+    this.nextId += 1;
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, {
         reject,
@@ -293,7 +298,8 @@ export class AcpAgentClient {
       return;
     }
 
-    const requestId = `perm-${++permissionSeq}`;
+    permissionSeq += 1;
+    const requestId = `perm-${permissionSeq}`;
     const timer: { handle?: ReturnType<typeof setTimeout> } = {};
     let settled = false;
     const finish = (optionId: string | null) => {

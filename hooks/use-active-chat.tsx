@@ -73,7 +73,10 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     if (!chatIdFromUrl) {
       newChatIdRef.current = generateUUID();
     }
-    if (!chatIdFromUrl || chatIdFromUrl !== resolvedChatIdRef.current) {
+    const isStillThisChat =
+      chatIdFromUrl === resolvedChatIdRef.current ||
+      chatIdFromUrl === newChatIdRef.current;
+    if (!isStillThisChat) {
       // Navigated to a different chat — the resolved id belongs to the old one.
       resolvedChatIdRef.current = null;
     }

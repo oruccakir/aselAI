@@ -219,11 +219,17 @@ function PureMultimodalInput({
   );
 
   const submitForm = useCallback(() => {
-    window.history.pushState(
-      {},
-      "",
-      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chatId}`
-    );
+    // Only move off "/" on the first send. Re-pushing /chat/<chatId> on
+    // later sends would clobber the composite <agentId>:<sessionId> URL the
+    // server resolved for this chat and split the conversation into a new
+    // ACP session.
+    if (!window.location.pathname.includes("/chat/")) {
+      window.history.pushState(
+        {},
+        "",
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chatId}`
+      );
+    }
 
     sendMessage({
       parts: [

@@ -158,6 +158,14 @@ export class AcpAgentClient {
         process.stderr.write(`[${this.spec.label}] ${chunk}`);
       }
     });
+    child.on("error", (error) => {
+      // e.g. spawn ENOENT when HERMES_ACP_HOME/PYTHON is wrong — without
+      // this handler the error escapes as an uncaughtException.
+      console.warn(`[${this.spec.label}] failed to start: ${error.message}`);
+      this.reset(
+        new Error(`${this.spec.label} failed to start: ${error.message}`)
+      );
+    });
     child.on("exit", (code) => {
       console.warn(
         `[${this.spec.label}] process exited (code=${code}); resetting connection`

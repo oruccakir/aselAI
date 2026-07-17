@@ -23,6 +23,11 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useActiveChat } from "@/hooks/use-active-chat";
+import {
+  type ChatHistory,
+  getChatHistoryPaginationKey,
+} from "@/lib/chat-history";
 import type { AppUser, Chat } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
@@ -35,13 +40,6 @@ type GroupedChats = {
   lastMonth: Chat[];
   older: Chat[];
 };
-
-export type ChatHistory = {
-  chats: Chat[];
-  hasMore: boolean;
-};
-
-const PAGE_SIZE = 20;
 
 const groupChatsByDate = (chats: Chat[]): GroupedChats => {
   const now = new Date();
@@ -76,31 +74,11 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
   );
 };
 
-export function getChatHistoryPaginationKey(
-  pageIndex: number,
-  previousPageData: ChatHistory
-) {
-  if (previousPageData && previousPageData.hasMore === false) {
-    return null;
-  }
-
-  if (pageIndex === 0) {
-    return `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history?limit=${PAGE_SIZE}`;
-  }
-
-  const firstChatFromPage = previousPageData.chats.at(-1);
-
-  if (!firstChatFromPage) {
-    return null;
-  }
-
-  return `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
-}
-
 export function SidebarHistory({ user }: { user: AppUser | undefined }) {
   const { setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const id = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : null;
+  const { currentModelId } = useActiveChat();
 
   const {
     data: paginatedChatHistories,
@@ -109,9 +87,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
     isLoading,
     mutate,
   } = useSWRInfinite<ChatHistory>(
-    // TODO(ACP): fetch chat history from the agent backend
-    // (was: user ? getChatHistoryPaginationKey : () => null).
-    () => null,
+    getChatHistoryPaginationKey(currentModelId),
     fetcher,
     { fallbackData: [], revalidateOnFocus: false }
   );

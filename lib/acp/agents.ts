@@ -1,4 +1,4 @@
-import { BotIcon, type LucideIcon } from "lucide-react";
+import { BotIcon, type LucideIcon, TelescopeIcon } from "lucide-react";
 
 /**
  * Registry of ACP agent profiles — the multi-profile seam.
@@ -19,9 +19,17 @@ export const ACP_AGENTS = [
     envHomeKey: null,
     icon: BotIcon as LucideIcon,
     id: "default",
-    label: "Hermes",
+    label: "Aselsan Agent",
     profileName: null,
   },
+  /*{
+    description: "Deep research and analysis agent",
+    envHomeKey: "RESEARCH_HERMES_HOME",
+    icon: TelescopeIcon as LucideIcon,
+    id: "research",
+    label: "Research Agent",
+    profileName: "research-agent",
+  },*/
 ] as const;
 
 export type AcpAgentDefinition = (typeof ACP_AGENTS)[number];

@@ -1,6 +1,6 @@
 export const suggestions = [
-  "What are the advantages of using Next.js?",
-  "Write code to demonstrate Dijkstra's algorithm",
-  "Help me write an essay about Silicon Valley",
-  "What is the weather in San Francisco?",
+  "What are ASELSAN's main product families and business sectors?",
+  "Research the latest news about ASELSAN's Steel Dome air defense system",
+  "Explain recent trends in radar and electronic warfare technology",
+  "Draft a professional email summarizing a project status update",
 ];

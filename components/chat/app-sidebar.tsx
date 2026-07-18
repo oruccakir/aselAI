@@ -12,6 +12,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { AselsanLogo } from "@/components/aselsan-logo";
 import { SidebarHistory } from "@/components/chat/sidebar-history";
 import { SidebarUserNav } from "@/components/chat/sidebar-user-nav";
 import {
@@ -114,6 +115,12 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
                   </TooltipContent>
                 </Tooltip>
               </div>
+              {/* Negative margins collapse the artwork's transparent padding;
+                  hidden on the collapsed icon rail. */}
+              <AselsanLogo
+                animated={false}
+                className="-my-6 -mx-4 h-20 group-data-[collapsible=icon]:hidden"
+              />
               <div className="group-data-[collapsible=icon]:hidden">
                 <SidebarTrigger className="text-sidebar-foreground/60 transition-colors duration-150 hover:text-sidebar-foreground" />
               </div>

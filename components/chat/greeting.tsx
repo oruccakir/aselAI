@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { AselsanLogo } from "@/components/aselsan-logo";
 import { ACP_AGENTS, getAcpAgent, isAcpAgentId } from "@/lib/acp/agents";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 type GreetingProps = {
   selectedAgentId: string;
 };
 
 export const Greeting = ({ selectedAgentId }: GreetingProps) => {
+  const { locale, dict } = useLocale();
   const agent = isAcpAgentId(selectedAgentId)
     ? getAcpAgent(selectedAgentId)
     : ACP_AGENTS[0];
@@ -22,8 +24,10 @@ export const Greeting = ({ selectedAgentId }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.35, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <span className="text-primary">I am {agent.label},</span>
-        <span className="text-foreground">What can I help with?</span>
+        <span className="text-primary">
+          {dict.greeting.iAm} {agent.label},
+        </span>
+        <span className="text-foreground">{dict.greeting.question}</span>
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
@@ -31,7 +35,7 @@ export const Greeting = ({ selectedAgentId }: GreetingProps) => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        {agent.greetingTagline}
+        {agent.greetingTagline[locale]}
       </motion.div>
     </div>
   );

@@ -11,34 +11,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useLocale } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils";
 import { CheckCircleFillIcon, ChevronDownIcon } from "./icons";
 
 type ThemeId = "light" | "dark" | "asel";
 
 const themes: Array<{
-  description: string;
+  description: (dict: Dictionary) => string;
   icon: ReactNode;
   id: ThemeId;
-  label: string;
+  label: (dict: Dictionary) => string;
 }> = [
   {
-    description: "Bright daytime palette",
+    description: (dict) => dict.themes.lightDescription,
     icon: <SunIcon size={16} />,
     id: "light",
-    label: "Light",
+    label: (dict) => dict.themes.light,
   },
   {
-    description: "Dimmed low-light palette",
+    description: (dict) => dict.themes.darkDescription,
     icon: <MoonIcon size={16} />,
     id: "dark",
-    label: "Dark",
+    label: (dict) => dict.themes.dark,
   },
   {
-    description: "ASELSAN navy + blue accent",
+    description: (dict) => dict.themes.aselDescription,
     icon: <PaletteIcon size={16} />,
     id: "asel",
-    label: "Asel Blue",
+    label: (dict) => dict.themes.asel,
   },
 ];
 
@@ -53,6 +55,7 @@ function ThemeSelectorItem({
   theme: (typeof themes)[number];
   themeId: ThemeId;
 }) {
+  const { dict } = useLocale();
   const handleSelect = useCallback(() => {
     setTheme(theme.id);
     setOpen(false);
@@ -68,9 +71,11 @@ function ThemeSelectorItem({
       <div className="flex flex-col items-start gap-1">
         <div className="flex items-center gap-2">
           {theme.icon}
-          {theme.label}
+          {theme.label(dict)}
         </div>
-        <div className="text-muted-foreground text-xs">{theme.description}</div>
+        <div className="text-muted-foreground text-xs">
+          {theme.description(dict)}
+        </div>
       </div>
       <div className="text-foreground opacity-0 group-data-[active=true]/item:opacity-100">
         <CheckCircleFillIcon />
@@ -84,6 +89,7 @@ export function ThemeSelector({
 }: React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
+  const { dict } = useLocale();
   const currentThemeId = (resolvedTheme ?? "light") as ThemeId;
 
   return (
@@ -105,9 +111,11 @@ export function ThemeSelector({
           <MoonIcon className="hidden size-4 dark:block asel:hidden" />
           <PaletteIcon className="hidden size-4 asel:block" />
           <span className="md:sr-only">
-            <span className="dark:hidden asel:hidden">Light</span>
-            <span className="hidden dark:block asel:hidden">Dark</span>
-            <span className="hidden asel:block">Asel Blue</span>
+            <span className="dark:hidden asel:hidden">{dict.themes.light}</span>
+            <span className="hidden dark:block asel:hidden">
+              {dict.themes.dark}
+            </span>
+            <span className="hidden asel:block">{dict.themes.asel}</span>
           </span>
           <ChevronDownIcon />
         </Button>

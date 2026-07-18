@@ -28,6 +28,7 @@ import {
   type ChatHistory,
   getChatHistoryPaginationKey,
 } from "@/lib/chat-history";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { AppUser, Chat } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
@@ -79,6 +80,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
   const pathname = usePathname();
   const id = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : null;
   const { currentAgentId } = useActiveChat();
+  const { dict } = useLocale();
 
   const {
     data: paginatedChatHistories,
@@ -125,8 +127,8 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
 
     // TODO(ACP): delete the chat through the agent backend.
 
-    toast.success("Chat deleted");
-  }, [deleteId, mutate, pathname, router]);
+    toast.success(dict.sidebar.chatDeleted);
+  }, [deleteId, mutate, pathname, router, dict]);
 
   const handleShowDeleteDialog = useCallback((chatId: string) => {
     setDeleteId(chatId);
@@ -144,7 +146,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupContent>
           <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[14px] text-sidebar-foreground/60">
-            Login to save and revisit previous chats!
+            {dict.sidebar.loginToSave}
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -155,7 +157,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-          History
+          {dict.sidebar.history}
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <div className="flex flex-col gap-0.5 px-1">
@@ -184,11 +186,11 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-          History
+          {dict.sidebar.history}
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[14px] text-sidebar-foreground/60">
-            Your conversations will appear here once you start chatting!
+            {dict.sidebar.emptyHistory}
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -199,7 +201,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
     <>
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-          History
+          {dict.sidebar.history}
         </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -216,7 +218,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
                       {groupedChats.today.length > 0 && (
                         <div>
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-                            Today
+                            {dict.sidebar.today}
                           </div>
                           {groupedChats.today.map((chat) => (
                             <ChatItem
@@ -233,7 +235,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
                       {groupedChats.yesterday.length > 0 && (
                         <div>
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-                            Yesterday
+                            {dict.sidebar.yesterday}
                           </div>
                           {groupedChats.yesterday.map((chat) => (
                             <ChatItem
@@ -250,7 +252,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
                       {groupedChats.lastWeek.length > 0 && (
                         <div>
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-                            Last 7 days
+                            {dict.sidebar.lastWeek}
                           </div>
                           {groupedChats.lastWeek.map((chat) => (
                             <ChatItem
@@ -267,7 +269,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
                       {groupedChats.lastMonth.length > 0 && (
                         <div>
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-                            Last 30 days
+                            {dict.sidebar.lastMonth}
                           </div>
                           {groupedChats.lastMonth.map((chat) => (
                             <ChatItem
@@ -284,7 +286,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
                       {groupedChats.older.length > 0 && (
                         <div>
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
-                            Older
+                            {dict.sidebar.older}
                           </div>
                           {groupedChats.older.map((chat) => (
                             <ChatItem
@@ -310,7 +312,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
               <div className="animate-spin">
                 <LoaderIcon />
               </div>
-              <div className="text-[11px]">Loading...</div>
+              <div className="text-[11px]">{dict.sidebar.loading}</div>
             </div>
           )}
         </SidebarGroupContent>
@@ -319,16 +321,15 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>{dict.dialogs.deleteChatTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              chat and remove it from our servers.
+              {dict.dialogs.deleteChatDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{dict.dialogs.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>
-              Continue
+              {dict.dialogs.continueAction}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

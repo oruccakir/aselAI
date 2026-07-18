@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { memo, useCallback } from "react";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { Chat } from "@/lib/types";
 import {
   DropdownMenu,
@@ -37,6 +38,7 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
+  const { dict } = useLocale();
   const { visibilityType, setVisibilityType } = useChatVisibility({
     chatId: chat.id,
     initialVisibilityType: chat.visibility,
@@ -84,7 +86,7 @@ const PureChatItem = ({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
               <ShareIcon />
-              <span>Share</span>
+              <span>{dict.sidebar.share}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -94,7 +96,7 @@ const PureChatItem = ({
                 >
                   <div className="flex flex-row items-center gap-2">
                     <LockIcon size={12} />
-                    <span>Private</span>
+                    <span>{dict.sidebar.private}</span>
                   </div>
                   {visibilityType === "private" ? (
                     <CheckCircleFillIcon />
@@ -106,7 +108,7 @@ const PureChatItem = ({
                 >
                   <div className="flex flex-row items-center gap-2">
                     <GlobeIcon />
-                    <span>Public</span>
+                    <span>{dict.sidebar.public}</span>
                   </div>
                   {visibilityType === "public" ? <CheckCircleFillIcon /> : null}
                 </DropdownMenuItem>
@@ -116,7 +118,7 @@ const PureChatItem = ({
 
           <DropdownMenuItem onSelect={handleDelete} variant="destructive">
             <TrashIcon />
-            <span>Delete</span>
+            <span>{dict.sidebar.delete}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

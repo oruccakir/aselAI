@@ -23,6 +23,7 @@ import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { DEFAULT_AGENT_ID } from "@/lib/acp/agents";
 import { getChatHistoryPaginationKey } from "@/lib/chat-history";
 import { ChatbotError } from "@/lib/errors";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
@@ -55,6 +56,7 @@ function extractChatId(pathname: string): string | null {
 
 export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { dict } = useLocale();
   const { setDataStream, setWaitingStatus } = useDataStream();
   const { mutate } = useSWRConfig();
 
@@ -177,7 +179,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         toast({ description: error.message, type: "error" });
       } else {
         toast({
-          description: error.message || "Oops, an error occurred!",
+          description: error.message || dict.toasts.genericError,
           type: "error",
         });
       }

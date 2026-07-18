@@ -12,41 +12,55 @@ import { BotIcon, type LucideIcon } from "lucide-react";
  *
  * `icon` is any lucide-react icon; the model picker renders it for the
  * agent's entry. `profileName: null` means the default Hermes home with no
- * profile env. `greetingTagline` is the line under "What can I help with?"
- * on the new-chat greeting; `suggestions` are that agent's starter prompts.
+ * profile env. `greetingTagline` is the line under the greeting question
+ * and `suggestions` are that agent's starter prompts — both are per-locale
+ * records keyed by the UI language (see lib/i18n/dictionaries.ts).
  * Nothing outside this file may hardcode a specific agent id.
  */
 export const ACP_AGENTS = [
   {
     description: "Default Hermes agent",
     envHomeKey: null,
-    greetingTagline:
-      "Ask a question, explore ideas to secure the beyond, the future and our country.",
+    greetingTagline: {
+      en: "Ask a question, explore ideas to secure the beyond, the future and our country.",
+      tr: "Bir soru sor; ufkun ötesini, geleceği ve ülkemizi güvence altına alacak fikirleri keşfet.",
+    },
     icon: BotIcon as LucideIcon,
     id: "default",
     label: "Aselsan Agent",
     profileName: null,
-    suggestions: [
-      "What are ASELSAN's main product families and business sectors?",
-      "Research the latest news about ASELSAN's Steel Dome air defense system",
-      "Explain recent trends in radar and electronic warfare technology",
-      "Draft a professional email summarizing a project status update",
-    ],
+    suggestions: {
+      en: [
+        "What are ASELSAN's main product families and business sectors?",
+        "Research the latest news about ASELSAN's Steel Dome air defense system",
+        "Explain recent trends in radar and electronic warfare technology",
+        "Draft a professional email summarizing a project status update",
+      ],
+      tr: [
+        "ASELSAN'ın ana ürün aileleri ve iş sektörleri nelerdir?",
+        "ASELSAN'ın Çelik Kubbe hava savunma sistemiyle ilgili son haberleri araştır",
+        "Radar ve elektronik harp teknolojisindeki son eğilimleri açıkla",
+        "Proje durum güncellemesini özetleyen profesyonel bir e-posta taslağı yaz",
+      ],
+    },
   },
   // Re-enable when the research profile goes live (also re-import
   // TelescopeIcon from lucide-react):
   // {
   //   description: "Deep research and analysis agent",
   //   envHomeKey: "RESEARCH_HERMES_HOME",
-  //   greetingTagline: "Dig deep into any topic with sourced analysis.",
+  //   greetingTagline: {
+  //     en: "Dig deep into any topic with sourced analysis.",
+  //     tr: "Her konuyu kaynaklı analizle derinlemesine incele.",
+  //   },
   //   icon: TelescopeIcon as LucideIcon,
   //   id: "research",
   //   label: "Research Agent",
   //   profileName: "research-agent",
-  //   suggestions: [
-  //     "Survey the state of the art in GaN radar amplifiers",
-  //     "Compare NATO air-defense procurement programs since 2020",
-  //   ],
+  //   suggestions: {
+  //     en: ["Survey the state of the art in GaN radar amplifiers"],
+  //     tr: ["GaN radar yükselteçlerinde son teknolojiyi araştır"],
+  //   },
   // },
 ] as const;
 

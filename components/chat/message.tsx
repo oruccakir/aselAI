@@ -1,6 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useCallback, useEffect, useState } from "react";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { MessageContent, MessageResponse } from "../ai-elements/message";
@@ -37,7 +38,8 @@ function AgentAvatar() {
 
 function WaitingText() {
   const { waitingStatus } = useDataStream();
-  const waitingText = waitingStatus?.message ?? "Waiting...";
+  const { dict } = useLocale();
+  const waitingText = waitingStatus?.message ?? dict.messageActions.waiting;
 
   return (
     <div className="flex min-h-[calc(14px*1.65)] min-w-0 items-center text-[14px] leading-[1.65]">

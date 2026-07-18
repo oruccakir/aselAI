@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LocaleProvider } from "@/lib/i18n/locale-context";
 
 import "./globals.css";
 
@@ -69,7 +70,9 @@ export default function RootLayout({
           enableSystem
           themes={["light", "dark", "asel"]}
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <LocaleProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

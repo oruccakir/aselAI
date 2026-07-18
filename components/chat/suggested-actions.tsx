@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRightIcon } from "lucide-react";
 import { memo, useCallback } from "react";
 import { ACP_AGENTS, getAcpAgent, isAcpAgentId } from "@/lib/acp/agents";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { ChatMessage } from "@/lib/types";
 import { Suggestion } from "../ai-elements/suggestion";
 import type { VisibilityType } from "./visibility-selector";
@@ -21,10 +22,11 @@ function PureSuggestedActions({
   sendMessage,
   selectedAgentId,
 }: SuggestedActionsProps) {
+  const { locale } = useLocale();
   const agent = isAcpAgentId(selectedAgentId)
     ? getAcpAgent(selectedAgentId)
     : ACP_AGENTS[0];
-  const suggestedActions = agent.suggestions;
+  const suggestedActions = agent.suggestions[locale];
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
       window.history.pushState(

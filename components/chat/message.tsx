@@ -20,7 +20,6 @@ import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
 
-
 function AgentAvatar() {
   return (
     <div className="size-8 overflow-hidden rounded-lg bg-muted/60 ring-1 ring-border/50">

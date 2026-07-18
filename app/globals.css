@@ -3,7 +3,8 @@
 
 @source "../node_modules/streamdown/dist/index.js";
 
-@custom-variant dark (&:is(.dark, .dark *));
+@custom-variant dark (&:is(.dark, .asel, .dark *, .asel *));
+@custom-variant asel (&:is(.asel, .asel *));
 
 @plugin "tailwindcss-animate";
 @plugin "@tailwindcss/typography";
@@ -139,6 +140,56 @@
     0 1px 3px oklch(0 0 0 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.03);
   --shadow-composer-focus:
     0 0 0 1px oklch(1 0 0 / 0.1), 0 4px 16px -4px oklch(0 0 0 / 0.3),
+    inset 0 1px 0 oklch(1 0 0 / 0.04);
+}
+
+/* Asel Blue — ASELSAN kurumsal lacivert + canlı mavi vurgu.
+   "Koyu" bir tema olduğu için dark: variant'ı .asel'i de kapsar
+   (yukarıdaki @custom-variant dark). Böylece logo invert'i, hata
+   kutuları, scrollbar gibi dark: stilleri Asel modunda da tutarlı çalışır. */
+.asel {
+  --background: oklch(0.17 0.03 255);
+  --foreground: oklch(0.96 0.01 240);
+  --card: oklch(0.215 0.035 255);
+  --card-foreground: oklch(0.96 0.01 240);
+  --popover: oklch(0.215 0.035 255);
+  --popover-foreground: oklch(0.96 0.01 240);
+  --primary: oklch(0.62 0.19 250);
+  --primary-foreground: oklch(0.98 0.005 240);
+  --secondary: oklch(0.26 0.04 255);
+  --secondary-foreground: oklch(0.82 0.04 240);
+  --muted: oklch(0.235 0.035 255);
+  --muted-foreground: oklch(0.7 0.03 240);
+  --accent: oklch(0.32 0.06 250);
+  --accent-foreground: oklch(0.96 0.01 240);
+  --destructive: oklch(0.7 0.15 25);
+  --border: oklch(0.3 0.04 250);
+  --input: oklch(0.3 0.04 250);
+  --ring: oklch(0.62 0.19 250);
+  --chart-1: oklch(0.62 0.19 250);
+  --chart-2: oklch(0.7 0.15 200);
+  --chart-3: oklch(0.72 0.16 160);
+  --chart-4: oklch(0.78 0.17 80);
+  --chart-5: oklch(0.66 0.22 340);
+  --sidebar: oklch(0.145 0.03 256);
+  --sidebar-foreground: oklch(0.8 0.03 240);
+  --sidebar-primary: oklch(0.62 0.19 250);
+  --sidebar-primary-foreground: oklch(0.98 0.005 240);
+  --sidebar-accent: oklch(0.62 0.19 250 / 0.12);
+  --sidebar-accent-foreground: oklch(0.96 0.01 240);
+  --sidebar-border: oklch(0.28 0.04 250);
+  --sidebar-ring: oklch(0.62 0.19 250);
+
+  --shadow-card:
+    inset 0 1px 0 oklch(1 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.25),
+    0 0.5px 1px oklch(0 0 0 / 0.18);
+  --shadow-float:
+    0 0 0 1px oklch(1 0 0 / 0.06), 0 16px 48px -6px oklch(0 0 0 / 0.4),
+    0 6px 12px -2px oklch(0 0 0 / 0.22);
+  --shadow-composer:
+    0 1px 3px oklch(0 0 0 / 0.25), inset 0 1px 0 oklch(1 0 0 / 0.03);
+  --shadow-composer-focus:
+    0 0 0 1px oklch(0.62 0.19 250 / 0.4), 0 4px 16px -4px oklch(0 0 0 / 0.35),
     inset 0 1px 0 oklch(1 0 0 / 0.04);
 }
 

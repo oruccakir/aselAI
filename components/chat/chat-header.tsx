@@ -4,6 +4,7 @@ import { PanelLeftIcon } from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import { ThemeSelector } from "./theme-selector";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
@@ -38,6 +39,8 @@ function PureChatHeader({
           selectedVisibilityType={selectedVisibilityType}
         />
       )}
+
+      <ThemeSelector />
     </header>
   );
 }

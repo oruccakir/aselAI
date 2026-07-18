@@ -121,7 +121,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
 
   return (
     <DataGrid
-      className={resolvedTheme === "dark" ? "rdg-dark" : "rdg-light"}
+      className={resolvedTheme === "light" ? "rdg-light" : "rdg-dark"}
       columns={columns}
       defaultColumnOptions={{
         resizable: true,

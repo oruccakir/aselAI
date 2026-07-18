@@ -184,9 +184,13 @@ function PureMultimodalInput({
           modelBtn?.click();
           break;
         }
-        case "theme":
-          setTheme(resolvedTheme === "dark" ? "light" : "dark");
+        case "theme": {
+          const order = ["light", "dark", "asel"] as const;
+          const current = (resolvedTheme ?? "light") as string;
+          const idx = order.indexOf(current as (typeof order)[number]);
+          setTheme(order[((idx === -1 ? 0 : idx) + 1) % order.length]);
           break;
+        }
         case "delete":
           toast("Delete this chat?", {
             action: {

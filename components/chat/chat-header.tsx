@@ -4,6 +4,7 @@ import { PanelLeftIcon } from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import { AgentSelector } from "./agent-selector";
 import { LanguageSelector } from "./language-selector";
 import { ThemeSelector } from "./theme-selector";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
@@ -33,6 +34,8 @@ function PureChatHeader({
       >
         <PanelLeftIcon className="size-4" />
       </Button>
+
+      <AgentSelector />
 
       {!isReadonly && (
         <VisibilitySelector

@@ -19,9 +19,10 @@ import { AcpAgentClient, type AcpSpawnSpec } from "./client";
  *  - <PROFILE>_HERMES_HOME  per-profile home override (backend.envHomeKey),
  *    default ~/.hermes/profiles/<profileName>
  *
- * Command backends (Gemini CLI, OpenCode, ...) are spawned from the
- * user's home directory with the inherited environment, so PATH lookups
- * and the agent's own auth/config resolution behave like a terminal run.
+ * Command backends (OpenCode, Antigravity via `agy-acp`, ...) are spawned
+ * from the user's home directory with the inherited environment, so PATH
+ * lookups and the agent's own auth/config resolution behave like a terminal
+ * run.
  */
 function hermesSpec(
   agent: AcpAgentDefinition,

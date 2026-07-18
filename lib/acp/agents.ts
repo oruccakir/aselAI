@@ -1,7 +1,7 @@
 import {
   BotIcon,
-  GemIcon,
   type LucideIcon,
+  OrbitIcon,
   SquareTerminalIcon,
 } from "lucide-react";
 
@@ -15,8 +15,9 @@ import {
  *  - `{ kind: "hermes", profileName, envHomeKey }` — the Hermes adapter
  *    from HERMES_ACP_HOME; a non-null `profileName` injects HERMES_HOME +
  *    HERMES_PROFILE so one checkout serves several isolated profiles.
- *  - `{ kind: "command", command, args }` — ANY ACP-speaking CLI (Gemini
- *    CLI, OpenCode, ...), spawned as-is with the user's home as cwd.
+ *  - `{ kind: "command", command, args }` — ANY ACP-speaking CLI (OpenCode,
+ *    Antigravity via the `agy-acp` adapter, ...), spawned as-is with the
+ *    user's home as cwd.
  *
  * `icon` is any lucide-react icon; the agent picker renders it for the
  * agent's entry. `greetingTagline` is the line under the greeting question
@@ -87,27 +88,27 @@ export const ACP_AGENTS = [
     },
   },
   {
-    backend: { args: ["--acp"], command: "gemini", kind: "command" },
-    description: "Google Gemini CLI over ACP",
+    backend: { args: [], command: "agy-acp", kind: "command" },
+    description: "Google Antigravity (agy) coding agent over ACP",
     greetingTagline: {
-      en: "Google's Gemini agent — ask questions, explore ideas, get answers fast.",
-      tr: "Google'ın Gemini ajanı — soru sor, fikir keşfet, hızlıca yanıt al.",
+      en: "Google's Antigravity agent — plan, build and ship code from your terminal.",
+      tr: "Google'ın Antigravity ajanı — terminalinden planla, kod yaz ve gönder.",
     },
-    icon: GemIcon as LucideIcon,
-    id: "gemini",
-    label: "Gemini CLI",
+    icon: OrbitIcon as LucideIcon,
+    id: "antigravity",
+    label: "Antigravity",
     suggestions: {
       en: [
         "Summarize the key ideas behind the Agent Client Protocol",
-        "Explain the trade-offs between REST and gRPC",
-        "Write a Python script that renames files in bulk",
-        "Brainstorm names for an internal developer tool",
+        "Refactor a function to use async/await instead of callbacks",
+        "Find and fix the failing test in this repository",
+        "Draft a README for a new internal CLI tool",
       ],
       tr: [
         "Agent Client Protocol'ün temel fikirlerini özetle",
-        "REST ile gRPC arasındaki ödünleşimleri açıkla",
-        "Dosyaları toplu yeniden adlandıran bir Python scripti yaz",
-        "Şirket içi bir geliştirici aracı için isim önerileri üret",
+        "Bir fonksiyonu callback yerine async/await ile refactor et",
+        "Bu repodaki başarısız testi bul ve düzelt",
+        "Yeni bir şirket içi CLI aracı için README taslağı yaz",
       ],
     },
   },

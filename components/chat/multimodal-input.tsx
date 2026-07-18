@@ -5,6 +5,7 @@ import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import {
   ArrowUpIcon,
+  BotIcon,
   BrainIcon,
   EyeIcon,
   LockIcon,
@@ -32,7 +33,6 @@ import {
   ModelSelectorInput,
   ModelSelectorItem,
   ModelSelectorList,
-  ModelSelectorLogo,
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
@@ -668,7 +668,8 @@ function ModelSelectorOption({
   selectedModelId: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
-  const [logoProvider] = model.id.split("/");
+  // Each registry agent brings its own icon; fall back to a neutral bot.
+  const AgentIcon = model.icon ?? BotIcon;
   const maybeWithTooltip = (icon: ReactNode, label: string) => {
     if (!curated) {
       return icon;
@@ -715,7 +716,7 @@ function ModelSelectorOption({
       onSelect={handleSelect}
       value={model.id}
     >
-      <ModelSelectorLogo provider={logoProvider} />
+      <AgentIcon className="size-4" />
       <ModelSelectorName>{model.name}</ModelSelectorName>
       <div className="ml-auto flex items-center gap-2 text-foreground/70">
         {capabilities?.[model.id]?.tools
@@ -774,7 +775,7 @@ function PureModelSelectorCompact({
     activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
     activeModels.find((m: ChatModel) => m.id === DEFAULT_CHAT_MODEL) ??
     activeModels[0];
-  const [provider] = selectedModel.id.split("/");
+  const SelectedIcon = selectedModel.icon ?? BotIcon;
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
@@ -784,7 +785,7 @@ function PureModelSelectorCompact({
           data-testid="model-selector"
           variant="ghost"
         >
-          {provider ? <ModelSelectorLogo provider={provider} /> : null}
+          <SelectedIcon className="size-4" />
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>

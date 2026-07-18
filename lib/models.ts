@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import { ACP_AGENTS } from "./acp/agents";
 
 export type ModelCapabilities = {
@@ -11,12 +12,14 @@ export type ChatModel = {
   name: string;
   provider: string;
   description: string;
+  icon?: LucideIcon;
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
 };
 
 // The "model" picker is the ACP agent picker: one entry per registry agent.
 export const chatModels: ChatModel[] = ACP_AGENTS.map((agent) => ({
   description: agent.description,
+  icon: agent.icon,
   id: agent.id,
   name: agent.label,
   provider: "acp",

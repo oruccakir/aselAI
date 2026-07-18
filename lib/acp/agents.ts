@@ -1,19 +1,23 @@
+import { BotIcon, type LucideIcon } from "lucide-react";
+
 /**
  * Registry of ACP agent profiles — the multi-profile seam.
  *
  * Adding an entry here is the ONLY change needed to surface a second agent
- * in the picker with its own ACP client, session list, and history, e.g.:
+ * in the picker with its own icon, ACP client, session list, and history:
  *
- *   { id: "asel", label: "Asel Agent", description: "...",
+ *   { id: "asel", label: "Asel Agent", description: "...", icon: RadarIcon,
  *     profileName: "asel-agent", envHomeKey: "ASEL_HERMES_HOME" },
  *
- * `profileName: null` means the default Hermes home with no profile env.
- * Nothing outside this file may hardcode a specific agent id.
+ * `icon` is any lucide-react icon; the model picker renders it for the
+ * agent's entry. `profileName: null` means the default Hermes home with no
+ * profile env. Nothing outside this file may hardcode a specific agent id.
  */
 export const ACP_AGENTS = [
   {
     description: "Default Hermes agent",
     envHomeKey: null,
+    icon: BotIcon as LucideIcon,
     id: "default",
     label: "Hermes",
     profileName: null,

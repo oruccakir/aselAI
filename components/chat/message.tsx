@@ -15,11 +15,26 @@ import {
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
-import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
+
+
+function AgentAvatar() {
+  return (
+    <div className="size-8 overflow-hidden rounded-lg bg-muted/60 ring-1 ring-border/50">
+      {/* biome-ignore lint/performance/noImgElement: tiny local asset; next/image adds nothing here */}
+      <img
+        alt="agent avatar"
+        className="size-full object-cover"
+        height={32}
+        src={"/images/asel_message_logo.jpeg"}
+        width={32}
+      />
+    </div>
+  );
+}
 
 function WaitingText() {
   const { waitingStatus } = useDataStream();
@@ -474,9 +489,7 @@ const PurePreviewMessage = ({
       >
         {isAssistant && (
           <div className="flex h-[calc(14px*1.65)] shrink-0 items-center">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-              <SparklesIcon size={13} />
-            </div>
+            <AgentAvatar />
           </div>
         )}
         {isAssistant ? (
@@ -499,9 +512,7 @@ export const ThinkingMessage = () => (
   >
     <div className="flex items-start gap-3">
       <div className="flex h-[calc(14px*1.65)] shrink-0 items-center">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-          <SparklesIcon size={13} />
-        </div>
+        <AgentAvatar />
       </div>
 
       <WaitingText />

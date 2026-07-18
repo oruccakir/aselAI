@@ -35,12 +35,6 @@ export type DBMessage = {
   createdAt: Date;
 };
 
-export type Vote = {
-  chatId: string;
-  messageId: string;
-  isUpvoted: boolean;
-};
-
 export type Document = {
   id: string;
   createdAt: Date;

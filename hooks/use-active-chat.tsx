@@ -23,7 +23,7 @@ import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { getChatHistoryPaginationKey } from "@/lib/chat-history";
 import { ChatbotError } from "@/lib/errors";
 import { DEFAULT_CHAT_MODEL } from "@/lib/models";
-import type { ChatMessage, Vote } from "@/lib/types";
+import type { ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
 type ActiveChatContextValue = {
@@ -40,7 +40,6 @@ type ActiveChatContextValue = {
   visibilityType: VisibilityType;
   isReadonly: boolean;
   isLoading: boolean;
-  votes: Vote[] | undefined;
   currentModelId: string;
   setCurrentModelId: (id: string) => void;
   showCreditCardAlert: boolean;
@@ -259,12 +258,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const isReadonly = isNewChat ? false : (chatData?.isReadonly ?? false);
 
-  // TODO(ACP): load votes from the agent backend
-  // (was: GET /api/vote?chatId=<id> once a chat had 2+ messages).
-  const { data: votes } = useSWR<Vote[]>(null, fetcher, {
-    revalidateOnFocus: false,
-  });
-
   const value = useMemo<ActiveChatContextValue>(
     () => ({
       addToolApprovalResponse,
@@ -284,7 +277,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       status,
       stop,
       visibilityType: visibility,
-      votes,
     }),
     [
       chatId,
@@ -300,7 +292,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       isReadonly,
       isNewChat,
       isLoading,
-      votes,
       currentModelId,
       showCreditCardAlert,
     ]

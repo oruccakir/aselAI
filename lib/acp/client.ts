@@ -109,6 +109,16 @@ const ACP_PROTOCOL_VERSION = 1;
 /** Deliberately under the agent's own ~60s permission timeout. */
 const PERMISSION_TIMEOUT_MS = 55_000;
 
+/**
+ * session/list and session/load are OPTIONAL ACP capabilities; agents that
+ * lack them answer JSON-RPC -32601. Rejections carry the stringified error
+ * object, so match on the code (and the human-readable variant for safety).
+ */
+function isMethodNotFound(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("-32601") || /method not found/i.test(message);
+}
+
 type Pending = {
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
@@ -412,14 +422,23 @@ export class AcpAgentClient {
     if (opts.cursor) {
       params.cursor = opts.cursor;
     }
-    const res = await this.request<AcpSessionListResponse>(
-      "session/list",
-      params
-    );
-    return {
-      nextCursor: res.nextCursor ?? null,
-      sessions: Array.isArray(res.sessions) ? res.sessions : [],
-    };
+    try {
+      const res = await this.request<AcpSessionListResponse>(
+        "session/list",
+        params
+      );
+      return {
+        nextCursor: res.nextCursor ?? null,
+        sessions: Array.isArray(res.sessions) ? res.sessions : [],
+      };
+    } catch (error) {
+      if (isMethodNotFound(error)) {
+        // Optional capability — an agent without session/list just has no
+        // visible history; the chat itself works fine.
+        return { nextCursor: null, sessions: [] };
+      }
+      throw error;
+    }
   }
 
   async loadSession(
@@ -457,7 +476,16 @@ export class AcpAgentClient {
           sessionId: targetSessionId,
           ...this.spec.sessionParams,
         }
-      );
+      ).catch((error) => {
+        if (isMethodNotFound(error)) {
+          // Optional capability — treat as a missing session so the route
+          // answers 404 instead of a hard error.
+          throw new Error(
+            `Session not found: ${targetSessionId} (agent does not support session/load)`
+          );
+        }
+        throw error;
+      });
       if (res === null) {
         throw new Error(`Session not found: ${targetSessionId}`);
       }

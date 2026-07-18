@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import {
+  type AcpAgentBackend,
   type AcpAgentDefinition,
   type AcpAgentId,
   getAcpAgent,
@@ -8,18 +9,24 @@ import {
 import { AcpAgentClient, type AcpSpawnSpec } from "./client";
 
 /**
- * Spawn specs for the Hermes ACP adapter (ported from cakir-ai's
- * backends.ts). A plain entry runs against the default Hermes home; a
- * profile entry additionally injects HERMES_HOME + HERMES_PROFILE so the
- * same checkout serves multiple isolated agent profiles.
+ * Spawn specs for ACP agent backends. Each registry entry's `backend`
+ * field (lib/acp/agents.ts) describes how to start its agent process;
+ * this module turns that description into a concrete AcpSpawnSpec.
  *
- * Env vars:
+ * Hermes env vars:
  *  - HERMES_ACP_HOME    Hermes checkout (default ~/.hermes/hermes-agent)
  *  - HERMES_ACP_PYTHON  venv python (default <home>/venv/bin/python)
- *  - <PROFILE>_HERMES_HOME  per-profile home override (agent.envHomeKey),
+ *  - <PROFILE>_HERMES_HOME  per-profile home override (backend.envHomeKey),
  *    default ~/.hermes/profiles/<profileName>
+ *
+ * Command backends (Gemini CLI, OpenCode, ...) are spawned from the
+ * user's home directory with the inherited environment, so PATH lookups
+ * and the agent's own auth/config resolution behave like a terminal run.
  */
-function hermesSpec(agent: AcpAgentDefinition): AcpSpawnSpec {
+function hermesSpec(
+  agent: AcpAgentDefinition,
+  backend: Extract<AcpAgentBackend, { kind: "hermes" }>
+): AcpSpawnSpec {
   const home =
     process.env.HERMES_ACP_HOME ?? join(homedir(), ".hermes", "hermes-agent");
   const python =
@@ -32,18 +39,37 @@ function hermesSpec(agent: AcpAgentDefinition): AcpSpawnSpec {
     label: `${agent.id}-acp`,
   };
 
-  if (agent.profileName) {
+  if (backend.profileName) {
     const profileHome =
-      (agent.envHomeKey ? process.env[agent.envHomeKey] : undefined) ??
-      join(homedir(), ".hermes", "profiles", agent.profileName);
+      (backend.envHomeKey ? process.env[backend.envHomeKey] : undefined) ??
+      join(homedir(), ".hermes", "profiles", backend.profileName);
     spec.env = {
       ...process.env,
       HERMES_HOME: profileHome,
-      HERMES_PROFILE: agent.profileName,
+      HERMES_PROFILE: backend.profileName,
     };
   }
 
   return spec;
+}
+
+function commandSpec(
+  agent: AcpAgentDefinition,
+  backend: Extract<AcpAgentBackend, { kind: "command" }>
+): AcpSpawnSpec {
+  return {
+    args: [...backend.args],
+    command: backend.command,
+    cwd: homedir(),
+    label: `${agent.id}-acp`,
+  };
+}
+
+function spawnSpec(agent: AcpAgentDefinition): AcpSpawnSpec {
+  const backend: AcpAgentBackend = agent.backend;
+  return backend.kind === "hermes"
+    ? hermesSpec(agent, backend)
+    : commandSpec(agent, backend);
 }
 
 /**
@@ -68,7 +94,7 @@ export function getAcpClient(agentId: AcpAgentId): AcpAgentClient {
   const registry = clientRegistry();
   let client = registry.get(agentId);
   if (!client) {
-    client = new AcpAgentClient(hermesSpec(getAcpAgent(agentId)));
+    client = new AcpAgentClient(spawnSpec(getAcpAgent(agentId)));
     registry.set(agentId, client);
   }
   return client;

@@ -4,13 +4,12 @@ import {
   type UIMessageChunk,
 } from "ai";
 import { z } from "zod";
-import { getAcpAgent, isAcpAgentId } from "@/lib/acp/agents";
+import { DEFAULT_AGENT_ID, getAcpAgent, isAcpAgentId } from "@/lib/acp/agents";
 import { getAcpClient } from "@/lib/acp/backend";
 import { joinChatId, splitChatId } from "@/lib/acp/chat-id";
 import type { AcpPromptBlock } from "@/lib/acp/client";
 import { createAcpUiStreamMapper } from "@/lib/acp/ui-stream";
 import { ChatbotError } from "@/lib/errors";
-import { DEFAULT_CHAT_MODEL } from "@/lib/models";
 
 // Talks to the ACP child process (node:child_process) — Node.js runtime
 // (the default for route handlers; the "runtime" segment export is
@@ -46,7 +45,7 @@ export async function POST(request: Request) {
     return new ChatbotError("bad_request:api").toResponse();
   }
 
-  const requestedAgentId = body.agentId ?? DEFAULT_CHAT_MODEL;
+  const requestedAgentId = body.agentId ?? DEFAULT_AGENT_ID;
   const split = splitChatId(body.id);
   const agentId = split?.agentId ?? requestedAgentId;
   if (!isAcpAgentId(agentId)) {

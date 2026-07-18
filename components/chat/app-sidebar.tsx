@@ -47,7 +47,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 export function AppSidebar({ user }: { user: AppUser | undefined }) {
   const router = useRouter();
   const { setOpenMobile, toggleSidebar } = useSidebar();
-  const { currentModelId } = useActiveChat();
+  const { currentAgentId } = useActiveChat();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
@@ -72,7 +72,7 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
     setShowDeleteAllDialog(false);
     router.replace("/");
     mutate(
-      unstable_serialize(getChatHistoryPaginationKey(currentModelId)),
+      unstable_serialize(getChatHistoryPaginationKey(currentAgentId)),
       [],
       {
         revalidate: false,
@@ -83,7 +83,7 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
     // session/delete ACP method on the Hermes side).
 
     toast.success("All chats deleted");
-  }, [mutate, router, currentModelId]);
+  }, [mutate, router, currentAgentId]);
 
   return (
     <>

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { suggestions } from "@/lib/constants";
+import { ACP_AGENTS } from "@/lib/acp/agents";
 import { SparklesIcon } from "./icons";
 
 function PreviewSuggestionButton({
@@ -62,7 +62,7 @@ export function Preview() {
         </div>
 
         <div className="grid w-full max-w-md grid-cols-2 gap-2">
-          {suggestions.map((suggestion) => (
+          {ACP_AGENTS[0].suggestions.map((suggestion) => (
             <PreviewSuggestionButton
               key={suggestion}
               onAction={handleAction}

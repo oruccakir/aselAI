@@ -41,8 +41,8 @@ export function ChatShell() {
     visibilityType,
     isReadonly,
     isLoading,
-    currentModelId,
-    setCurrentModelId,
+    currentAgentId,
+    setCurrentAgentId,
     showCreditCardAlert,
     setShowCreditCardAlert,
   } = useActiveChat();
@@ -134,7 +134,7 @@ export function ChatShell() {
               messages={messages}
               onEditMessage={handleEditMessage}
               regenerate={regenerate}
-              selectedModelId={currentModelId}
+              selectedAgentId={currentAgentId}
               setMessages={setMessages}
               status={status}
             />
@@ -148,9 +148,9 @@ export function ChatShell() {
                   input={input}
                   isLoading={isLoading}
                   messages={messages}
+                  onAgentChange={setCurrentAgentId}
                   onCancelEdit={handleCancelEdit}
-                  onModelChange={setCurrentModelId}
-                  selectedModelId={currentModelId}
+                  selectedAgentId={currentAgentId}
                   selectedVisibilityType={visibilityType}
                   sendMessage={
                     editingMessage ? handleSendEditedMessage : sendMessage
@@ -174,7 +174,7 @@ export function ChatShell() {
           isReadonly={isReadonly}
           messages={messages}
           regenerate={regenerate}
-          selectedModelId={currentModelId}
+          selectedAgentId={currentAgentId}
           selectedVisibilityType={visibilityType}
           sendMessage={sendMessage}
           setAttachments={setAttachments}

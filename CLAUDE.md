@@ -31,7 +31,7 @@ New chat: client UUID → `POST /api/chat` → `session/new` → server streams 
 Hermes blocks its turn on `session/request_permission` while the original `/api/chat` SSE stream stays open. The Allow/Deny buttons (`ToolApprovalActions` in `components/chat/message.tsx`) update local part state via `addToolApprovalResponse` AND `POST /api/acp/permission`; tool output then arrives on the original stream. A `sendAutomaticallyWhen` continuation would open a second concurrent stream on the same chat — never do that.
 
 ### History
-Per-agent, cursor-paged: `lib/chat-history.ts` exports the `getChatHistoryPaginationKey(agentId)` SWR-infinite key factory (`unstable_serialize` keys off the first-page string, so closures from different call sites share one cache entry). `ActiveChatProvider` wraps the sidebar (hoisted in `app/(chat)/layout.tsx`) so the history list follows the selected agent. The model picker IS the agent picker — `lib/models.ts` derives `chatModels`/`modelCapabilities` from the registry.
+Per-agent, cursor-paged: `lib/chat-history.ts` exports the `getChatHistoryPaginationKey(agentId)` SWR-infinite key factory (`unstable_serialize` keys off the first-page string, so closures from different call sites share one cache entry). `ActiveChatProvider` wraps the sidebar (hoisted in `app/(chat)/layout.tsx`) so the history list follows the selected agent. The composer's picker is the agent picker — `lib/agent-picker.ts` derives `chatAgents`/`agentCapabilities` from the registry (`DEFAULT_AGENT_ID` lives in `lib/acp/agents.ts`); the UI passes the selection around as `selectedAgentId`/`currentAgentId`.
 
 ## Commands
 

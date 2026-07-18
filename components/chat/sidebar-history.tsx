@@ -78,7 +78,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
   const { setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const id = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : null;
-  const { currentModelId } = useActiveChat();
+  const { currentAgentId } = useActiveChat();
 
   const {
     data: paginatedChatHistories,
@@ -87,7 +87,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
     isLoading,
     mutate,
   } = useSWRInfinite<ChatHistory>(
-    getChatHistoryPaginationKey(currentModelId),
+    getChatHistoryPaginationKey(currentAgentId),
     fetcher,
     { fallbackData: [], revalidateOnFocus: false }
   );

@@ -8,7 +8,6 @@ import {
   BotIcon,
   BrainIcon,
   EyeIcon,
-  LockIcon,
   WrenchIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,13 +35,13 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
+import { DEFAULT_AGENT_ID } from "@/lib/acp/agents";
 import {
-  type ChatModel,
-  chatModels,
-  DEFAULT_CHAT_MODEL,
-  type ModelCapabilities,
-  modelCapabilities,
-} from "@/lib/models";
+  type AgentCapabilities,
+  agentCapabilities,
+  type ChatAgent,
+  chatAgents,
+} from "@/lib/agent-picker";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -83,8 +82,8 @@ function PureMultimodalInput({
   sendMessage,
   className,
   selectedVisibilityType,
-  selectedModelId,
-  onModelChange,
+  selectedAgentId,
+  onAgentChange,
   editingMessage,
   onCancelEdit,
   isLoading,
@@ -103,8 +102,8 @@ function PureMultimodalInput({
     | (() => Promise<void>);
   className?: string;
   selectedVisibilityType: VisibilityType;
-  selectedModelId: string;
-  onModelChange?: (modelId: string) => void;
+  selectedAgentId: string;
+  onAgentChange?: (agentId: string) => void;
   editingMessage?: ChatMessage | null;
   onCancelEdit?: () => void;
   isLoading?: boolean;
@@ -177,11 +176,11 @@ function PureMultimodalInput({
         case "rename":
           toast("Rename is available from the sidebar chat menu.");
           break;
-        case "model": {
-          const modelBtn = document.querySelector<HTMLButtonElement>(
-            "[data-testid='model-selector']"
+        case "agent": {
+          const agentBtn = document.querySelector<HTMLButtonElement>(
+            "[data-testid='agent-selector']"
           );
-          modelBtn?.click();
+          agentBtn?.click();
           break;
         }
         case "theme": {
@@ -458,6 +457,7 @@ function PureMultimodalInput({
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
+            selectedAgentId={selectedAgentId}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
           />
@@ -484,7 +484,7 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-2xl [&>div]:border [&>div]:border-border/30 [&>div]:bg-card/70 [&>div]:shadow-[var(--shadow-composer)] [&>div]:transition-shadow [&>div]:duration-300 [&>div]:focus-within:shadow-[var(--shadow-composer-focus)]"
+        className="[&>div]:rounded-2xl [&>div]:border [&>div]:border-border/60 [&>div]:bg-card [&>div]:shadow-[var(--shadow-composer)] [&>div]:transition-[border-color,box-shadow] [&>div]:duration-300 [&>div]:focus-within:border-primary/50 [&>div]:focus-within:shadow-[var(--shadow-composer-focus)]"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -515,7 +515,7 @@ function PureMultimodalInput({
           </div>
         )}
         <PromptInputTextarea
-          className="min-h-24 text-[14px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/35"
+          className="min-h-24 text-[14px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/55"
           data-testid="multimodal-input"
           onChange={handleInput}
           onKeyDown={handleTextareaKeyDown}
@@ -529,12 +529,12 @@ function PureMultimodalInput({
           <PromptInputTools>
             <AttachmentsButton
               fileInputRef={fileInputRef}
-              selectedModelId={selectedModelId}
+              selectedAgentId={selectedAgentId}
               status={status}
             />
-            <ModelSelectorCompact
-              onModelChange={onModelChange}
-              selectedModelId={selectedModelId}
+            <AgentSelectorCompact
+              onAgentChange={onAgentChange}
+              selectedAgentId={selectedAgentId}
             />
           </PromptInputTools>
 
@@ -545,7 +545,7 @@ function PureMultimodalInput({
               className={cn(
                 "h-7 w-7 rounded-xl transition-all duration-200",
                 input.trim()
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-95"
+                  ? "bg-primary text-primary-foreground hover:opacity-85 active:scale-95"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
@@ -577,7 +577,7 @@ export const MultimodalInput = memo(
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {
       return false;
     }
-    if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+    if (prevProps.selectedAgentId !== nextProps.selectedAgentId) {
       return false;
     }
     if (prevProps.editingMessage !== nextProps.editingMessage) {
@@ -620,15 +620,15 @@ const AttachmentPreviewItem = memo(PureAttachmentPreviewItem);
 function PureAttachmentsButton({
   fileInputRef,
   status,
-  selectedModelId,
+  selectedAgentId,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>["status"];
-  selectedModelId: string;
+  selectedAgentId: string;
 }) {
   // TODO(ACP): capabilities should come from the connected agent
   // (was: GET /api/models).
-  const hasVision = modelCapabilities[selectedModelId]?.vision ?? false;
+  const hasVision = agentCapabilities[selectedAgentId]?.vision ?? false;
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
@@ -657,228 +657,127 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
-function ModelSelectorOption({
+function AgentSelectorOption({
+  agent,
   capabilities,
-  curated,
-  model,
-  onModelChange,
-  selectedModelId,
+  onAgentChange,
+  selectedAgentId,
   setOpen,
 }: {
-  capabilities: Record<string, ModelCapabilities> | undefined;
-  curated: boolean;
-  model: ChatModel;
-  onModelChange?: (modelId: string) => void;
-  selectedModelId: string;
+  agent: ChatAgent;
+  capabilities: Record<string, AgentCapabilities>;
+  onAgentChange?: (agentId: string) => void;
+  selectedAgentId: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   // Each registry agent brings its own icon; fall back to a neutral bot.
-  const AgentIcon = model.icon ?? BotIcon;
-  const maybeWithTooltip = (icon: ReactNode, label: string) => {
-    if (!curated) {
-      return icon;
-    }
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">{icon}</span>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={8}>
-          {label}
-        </TooltipContent>
-      </Tooltip>
-    );
-  };
+  const AgentIcon = agent.icon ?? BotIcon;
+  const withTooltip = (icon: ReactNode, label: string) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{icon}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={8}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
   const handleSelect = useCallback(() => {
-    if (!curated) {
-      return;
-    }
-    onModelChange?.(model.id);
-    setCookie("chat-model", model.id);
+    onAgentChange?.(agent.id);
+    setCookie("chat-agent", agent.id);
     setOpen(false);
     setTimeout(() => {
       document
         .querySelector<HTMLTextAreaElement>("[data-testid='multimodal-input']")
         ?.focus();
     }, 50);
-  }, [curated, model.id, onModelChange, setOpen]);
+  }, [agent.id, onAgentChange, setOpen]);
 
-  const option = (
+  return (
     <ModelSelectorItem
-      aria-disabled={!curated}
       className={cn(
-        "flex w-full transition-colors",
-        model.id === selectedModelId &&
-          "border-b border-dashed border-foreground/50",
-        curated
-          ? "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
-          : "cursor-not-allowed opacity-40 data-[selected=true]:bg-transparent data-[selected=true]:opacity-60 data-[selected=true]:ring-1 data-[selected=true]:ring-muted-foreground/30 data-[selected=true]:ring-inset"
+        "flex w-full transition-colors data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+        agent.id === selectedAgentId &&
+          "border-b border-dashed border-foreground/50"
       )}
       // cmdk filters on `value` (the agent id); make display names findable.
-      keywords={[model.name, model.provider]}
+      keywords={[agent.name]}
       onSelect={handleSelect}
-      value={model.id}
+      value={agent.id}
     >
       <AgentIcon className="size-4" />
-      <ModelSelectorName>{model.name}</ModelSelectorName>
+      <ModelSelectorName>{agent.name}</ModelSelectorName>
       <div className="ml-auto flex items-center gap-2 text-foreground/70">
-        {capabilities?.[model.id]?.tools
-          ? maybeWithTooltip(
+        {capabilities[agent.id]?.tools
+          ? withTooltip(
               <WrenchIcon className="size-3.5" />,
               "Supports tool use"
             )
           : null}
-        {capabilities?.[model.id]?.vision
-          ? maybeWithTooltip(
-              <EyeIcon className="size-3.5" />,
-              "Supports vision"
-            )
+        {capabilities[agent.id]?.vision
+          ? withTooltip(<EyeIcon className="size-3.5" />, "Supports vision")
           : null}
-        {capabilities?.[model.id]?.reasoning
-          ? maybeWithTooltip(
+        {capabilities[agent.id]?.reasoning
+          ? withTooltip(
               <BrainIcon className="size-3.5" />,
               "Supports reasoning"
             )
           : null}
-        {!curated && <LockIcon className="size-3 text-muted-foreground/50" />}
       </div>
     </ModelSelectorItem>
   );
-
-  if (curated) {
-    return option;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="w-full cursor-not-allowed">{option}</div>
-      </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8}>
-        This model is not available in the demo.
-      </TooltipContent>
-    </Tooltip>
-  );
 }
 
-function PureModelSelectorCompact({
-  selectedModelId,
-  onModelChange,
+function PureAgentSelectorCompact({
+  selectedAgentId,
+  onAgentChange,
 }: {
-  selectedModelId: string;
-  onModelChange?: (modelId: string) => void;
+  selectedAgentId: string;
+  onAgentChange?: (agentId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  // TODO(ACP): model list and capabilities should come from the connected
+  // TODO(ACP): agent list and capabilities should come from the connected
   // agent (was: GET /api/models).
-  const capabilities = modelCapabilities;
-  const activeModels = chatModels;
-
-  const selectedModel =
-    activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
-    activeModels.find((m: ChatModel) => m.id === DEFAULT_CHAT_MODEL) ??
-    activeModels[0];
-  const SelectedIcon = selectedModel.icon ?? BotIcon;
+  const selectedAgent =
+    chatAgents.find((a: ChatAgent) => a.id === selectedAgentId) ??
+    chatAgents.find((a: ChatAgent) => a.id === DEFAULT_AGENT_ID) ??
+    chatAgents[0];
+  const SelectedIcon = selectedAgent.icon ?? BotIcon;
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
       <ModelSelectorTrigger asChild>
         <Button
           className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-          data-testid="model-selector"
+          data-testid="agent-selector"
           variant="ghost"
         >
           <SelectedIcon className="size-4" />
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          <ModelSelectorName>{selectedAgent.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
-      <ModelSelectorContent commandDefaultValue={selectedModel.id}>
-        <ModelSelectorInput placeholder="Search models..." />
+      <ModelSelectorContent commandDefaultValue={selectedAgent.id}>
+        <ModelSelectorInput placeholder="Search agents..." />
         <ModelSelectorList>
-          {(() => {
-            const curatedIds = new Set(chatModels.map((m) => m.id));
-            const allModels = chatModels;
-
-            const grouped: Record<
-              string,
-              { model: ChatModel; curated: boolean }[]
-            > = {};
-            for (const model of allModels) {
-              const key = curatedIds.has(model.id)
-                ? "_available"
-                : model.provider;
-              if (!grouped[key]) {
-                grouped[key] = [];
-              }
-              grouped[key].push({ curated: curatedIds.has(model.id), model });
-            }
-
-            const sortedKeys = Object.keys(grouped).sort((a, b) => {
-              if (a === "_available") {
-                return -1;
-              }
-              if (b === "_available") {
-                return 1;
-              }
-              return a.localeCompare(b);
-            });
-
-            const providerNames: Record<string, string> = {
-              alibaba: "Alibaba",
-              anthropic: "Anthropic",
-              "arcee-ai": "Arcee AI",
-              bytedance: "ByteDance",
-              cohere: "Cohere",
-              deepseek: "DeepSeek",
-              google: "Google",
-              inception: "Inception",
-              kwaipilot: "Kwaipilot",
-              meituan: "Meituan",
-              meta: "Meta",
-              minimax: "MiniMax",
-              mistral: "Mistral",
-              moonshotai: "Moonshot",
-              morph: "Morph",
-              nvidia: "Nvidia",
-              openai: "OpenAI",
-              perplexity: "Perplexity",
-              "prime-intellect": "Prime Intellect",
-              xai: "xAI",
-              xiaomi: "Xiaomi",
-              zai: "Zai",
-            };
-
-            return sortedKeys.map((key) => (
-              <ModelSelectorGroup
-                heading={
-                  key === "_available"
-                    ? "Available"
-                    : (providerNames[key] ?? key)
-                }
-                key={key}
-              >
-                {grouped[key].map(({ model, curated }) => (
-                  <ModelSelectorOption
-                    capabilities={capabilities}
-                    curated={curated}
-                    key={model.id}
-                    model={model}
-                    onModelChange={onModelChange}
-                    selectedModelId={selectedModel.id}
-                    setOpen={setOpen}
-                  />
-                ))}
-              </ModelSelectorGroup>
-            ));
-          })()}
+          <ModelSelectorGroup heading="Agents">
+            {chatAgents.map((agent) => (
+              <AgentSelectorOption
+                agent={agent}
+                capabilities={agentCapabilities}
+                key={agent.id}
+                onAgentChange={onAgentChange}
+                selectedAgentId={selectedAgent.id}
+                setOpen={setOpen}
+              />
+            ))}
+          </ModelSelectorGroup>
         </ModelSelectorList>
       </ModelSelectorContent>
     </ModelSelector>
   );
 }
 
-const ModelSelectorCompact = memo(PureModelSelectorCompact);
+const AgentSelectorCompact = memo(PureAgentSelectorCompact);
 
 function PureStopButton({
   stop,

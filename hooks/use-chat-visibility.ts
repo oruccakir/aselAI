@@ -18,7 +18,7 @@ export function useChatVisibility({
   initialVisibilityType: VisibilityType;
 }) {
   const { mutate, cache } = useSWRConfig();
-  const { currentModelId } = useActiveChat();
+  const { currentAgentId } = useActiveChat();
   const history: ChatHistory = cache.get(
     `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history`
   )?.data;
@@ -44,7 +44,7 @@ export function useChatVisibility({
 
   const setVisibilityType = (updatedVisibilityType: VisibilityType) => {
     setLocalVisibility(updatedVisibilityType);
-    mutate(unstable_serialize(getChatHistoryPaginationKey(currentModelId)));
+    mutate(unstable_serialize(getChatHistoryPaginationKey(currentAgentId)));
 
     // TODO(ACP): persist the visibility change through the agent backend.
   };

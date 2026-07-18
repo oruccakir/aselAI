@@ -20,9 +20,9 @@ import { unstable_serialize } from "swr/infinite";
 import { useDataStream } from "@/components/chat/data-stream-provider";
 import { toast } from "@/components/chat/toast";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
+import { DEFAULT_AGENT_ID } from "@/lib/acp/agents";
 import { getChatHistoryPaginationKey } from "@/lib/chat-history";
 import { ChatbotError } from "@/lib/errors";
-import { DEFAULT_CHAT_MODEL } from "@/lib/models";
 import type { ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
@@ -40,8 +40,8 @@ type ActiveChatContextValue = {
   visibilityType: VisibilityType;
   isReadonly: boolean;
   isLoading: boolean;
-  currentModelId: string;
-  setCurrentModelId: (id: string) => void;
+  currentAgentId: string;
+  setCurrentAgentId: (id: string) => void;
   showCreditCardAlert: boolean;
   setShowCreditCardAlert: Dispatch<SetStateAction<boolean>>;
 };
@@ -92,11 +92,12 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const isNewChat = !chatIdFromUrl || isLiveResolvedChat;
   const chatId = isNewChat ? newChatIdRef.current : (chatIdFromUrl as string);
 
-  const [currentModelId, setCurrentModelId] = useState(DEFAULT_CHAT_MODEL);
-  const currentModelIdRef = useRef(currentModelId);
+  const [currentAgentId, setCurrentAgentId] =
+    useState<string>(DEFAULT_AGENT_ID);
+  const currentAgentIdRef = useRef(currentAgentId);
   useEffect(() => {
-    currentModelIdRef.current = currentModelId;
-  }, [currentModelId]);
+    currentAgentIdRef.current = currentAgentId;
+  }, [currentAgentId]);
 
   const [input, setInput] = useState("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
@@ -111,7 +112,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         prepareSendMessagesRequest(request) {
           return {
             body: {
-              agentId: currentModelIdRef.current,
+              agentId: currentAgentIdRef.current,
               id: resolvedChatIdRef.current ?? request.id,
               message: request.messages.at(-1),
               ...request.body,
@@ -184,7 +185,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     onFinish: () => {
       mutate(
         unstable_serialize(
-          getChatHistoryPaginationKey(currentModelIdRef.current)
+          getChatHistoryPaginationKey(currentAgentIdRef.current)
         )
       );
     },
@@ -228,12 +229,12 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isNewChat) {
-      const cookieModel = document.cookie
+      const cookieAgent = document.cookie
         .split("; ")
-        .find((row) => row.startsWith("chat-model="))
+        .find((row) => row.startsWith("chat-agent="))
         ?.split("=")[1];
-      if (cookieModel) {
-        setCurrentModelId(decodeURIComponent(cookieModel));
+      if (cookieAgent) {
+        setCurrentAgentId(decodeURIComponent(cookieAgent));
       }
     }
   }, [isNewChat]);
@@ -262,14 +263,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     () => ({
       addToolApprovalResponse,
       chatId,
-      currentModelId,
+      currentAgentId,
       input,
       isLoading: !isNewChat && isLoading,
       isReadonly,
       messages,
       regenerate,
       sendMessage,
-      setCurrentModelId,
+      setCurrentAgentId,
       setInput,
       setMessages,
       setShowCreditCardAlert,
@@ -292,7 +293,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       isReadonly,
       isNewChat,
       isLoading,
-      currentModelId,
+      currentAgentId,
       showCreditCardAlert,
     ]
   );

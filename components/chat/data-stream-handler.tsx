@@ -11,7 +11,7 @@ import { useDataStream } from "./data-stream-provider";
 
 export function DataStreamHandler() {
   const { dataStream, setDataStream } = useDataStream();
-  const { currentModelId } = useActiveChat();
+  const { currentAgentId } = useActiveChat();
   const { mutate } = useSWRConfig();
 
   const { artifact, setArtifact, setMetadata } = useArtifact();
@@ -26,7 +26,7 @@ export function DataStreamHandler() {
 
     for (const delta of newDeltas) {
       if (delta.type === "data-chat-title") {
-        mutate(unstable_serialize(getChatHistoryPaginationKey(currentModelId)));
+        mutate(unstable_serialize(getChatHistoryPaginationKey(currentAgentId)));
         continue;
       }
       const artifactDefinition = artifactDefinitions.find(
@@ -94,7 +94,7 @@ export function DataStreamHandler() {
     artifact,
     setDataStream,
     mutate,
-    currentModelId,
+    currentAgentId,
   ]);
 
   return null;

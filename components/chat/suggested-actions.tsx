@@ -2,8 +2,9 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { motion } from "framer-motion";
+import { ArrowUpRightIcon } from "lucide-react";
 import { memo, useCallback } from "react";
-import { suggestions } from "@/lib/constants";
+import { ACP_AGENTS, getAcpAgent, isAcpAgentId } from "@/lib/acp/agents";
 import type { ChatMessage } from "@/lib/types";
 import { Suggestion } from "../ai-elements/suggestion";
 import type { VisibilityType } from "./visibility-selector";
@@ -11,11 +12,19 @@ import type { VisibilityType } from "./visibility-selector";
 type SuggestedActionsProps = {
   chatId: string;
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
+  selectedAgentId: string;
   selectedVisibilityType: VisibilityType;
 };
 
-function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
-  const suggestedActions = suggestions;
+function PureSuggestedActions({
+  chatId,
+  sendMessage,
+  selectedAgentId,
+}: SuggestedActionsProps) {
+  const agent = isAcpAgentId(selectedAgentId)
+    ? getAcpAgent(selectedAgentId)
+    : ACP_AGENTS[0];
+  const suggestedActions = agent.suggestions;
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
       window.history.pushState(
@@ -55,11 +64,12 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
           }}
         >
           <Suggestion
-            className="h-auto w-full whitespace-nowrap rounded-xl border border-border/50 bg-card/30 px-4 py-3 text-left text-[12px] leading-relaxed text-muted-foreground transition-all duration-200 sm:whitespace-normal sm:p-4 sm:text-[14px] hover:-translate-y-0.5 hover:bg-card/60 hover:text-foreground hover:shadow-[var(--shadow-card)]"
+            className="group h-auto w-full items-start justify-between gap-3 whitespace-nowrap rounded-xl border border-border/60 bg-card px-4 py-3 text-left text-[12px] text-foreground/70 leading-relaxed shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-foreground hover:shadow-[var(--shadow-float)] sm:whitespace-normal sm:p-4 sm:text-[14px]"
             onClick={handleSuggestionClick}
             suggestion={suggestedAction}
           >
-            {suggestedAction}
+            <span className="min-w-0">{suggestedAction}</span>
+            <ArrowUpRightIcon className="mt-0.5 size-3.5 shrink-0 text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
           </Suggestion>
         </motion.div>
       ))}
@@ -71,6 +81,9 @@ export const SuggestedActions = memo(
   PureSuggestedActions,
   (prevProps, nextProps) => {
     if (prevProps.chatId !== nextProps.chatId) {
+      return false;
+    }
+    if (prevProps.selectedAgentId !== nextProps.selectedAgentId) {
       return false;
     }
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {

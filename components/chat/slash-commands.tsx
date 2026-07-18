@@ -40,10 +40,10 @@ export const slashCommands: SlashCommand[] = [
     name: "rename",
   },
   {
-    action: "model",
-    description: "Change the AI model",
+    action: "agent",
+    description: "Switch the agent",
     icon: <ListIcon className="size-3.5" />,
-    name: "model",
+    name: "agent",
   },
   {
     action: "theme",

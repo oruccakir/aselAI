@@ -18,7 +18,7 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   isLoading?: boolean;
-  selectedModelId: string;
+  selectedAgentId: string;
   onEditMessage?: (message: ChatMessage) => void;
 };
 
@@ -32,7 +32,7 @@ function PureMessages({
   isReadonly,
   isArtifactVisible,
   isLoading,
-  selectedModelId: _selectedModelId,
+  selectedAgentId,
   onEditMessage,
 }: MessagesProps) {
   const {
@@ -64,7 +64,7 @@ function PureMessages({
     <div className="relative flex-1 bg-background">
       {messages.length === 0 && !isLoading && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <Greeting />
+          <Greeting selectedAgentId={selectedAgentId} />
         </div>
       )}
       <div

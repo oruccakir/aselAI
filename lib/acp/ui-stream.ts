@@ -156,7 +156,9 @@ export function createAcpUiStreamMapper(
           return [
             {
               dynamic: true,
-              output: content || status,
+              // No status fallback: the header badge already says
+              // "Completed", so an output that just repeats it is noise.
+              output: content,
               toolCallId,
               type: "tool-output-available",
             },

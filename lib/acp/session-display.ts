@@ -127,7 +127,7 @@ export function acpUpdatesToUIMessages(updates: AcpUpdate[]): ChatMessage[] {
           status === "completed"
             ? {
                 input: part.input,
-                output: content || status,
+                output: content,
                 state: "output-available",
                 toolCallId,
                 toolName: part.toolName,

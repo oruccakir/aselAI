@@ -1,6 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ChatMessage, Vote } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { MessageContent, MessageResponse } from "../ai-elements/message";
@@ -26,7 +26,7 @@ function WaitingText() {
   const waitingText = waitingStatus?.message ?? "Waiting...";
 
   return (
-    <div className="flex min-h-[calc(13px*1.65)] min-w-0 items-center text-[13px] leading-[1.65]">
+    <div className="flex min-h-[calc(14px*1.65)] min-w-0 items-center text-[14px] leading-[1.65]">
       <Shimmer
         as="span"
         className="font-medium whitespace-normal break-words"
@@ -92,6 +92,81 @@ function ToolApprovalActions({
       >
         Allow
       </button>
+    </div>
+  );
+}
+
+function DynamicToolMessagePart({
+  part,
+  addToolApprovalResponse,
+}: {
+  part: Extract<ChatMessage["parts"][number], { type: "dynamic-tool" }>;
+  addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
+}) {
+  // Agent-defined tools (any Hermes skill, MCP server or sub-agent) arrive
+  // as dynamic parts — name, input and output come from the payload, so new
+  // tools render with no code change here.
+  const { state } = part;
+  const toolName = part.title ?? part.toolName;
+  const approvalId = part.approval?.id;
+  const isDenied =
+    state === "output-denied" ||
+    (state === "approval-responded" && part.approval?.approved === false);
+
+  // Collapsed by default; forced open while an approval is pending so the
+  // Allow/Deny buttons are reachable (defaultOpen would not re-evaluate
+  // when the state changes mid-stream).
+  const needsApproval = state === "approval-requested";
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (needsApproval) {
+      setOpen(true);
+    }
+  }, [needsApproval]);
+
+  const hasOutput =
+    state === "output-available" &&
+    part.output !== undefined &&
+    part.output !== null &&
+    part.output !== "";
+
+  return (
+    <div className="w-[min(100%,450px)]">
+      <Tool className="w-full" onOpenChange={setOpen} open={open}>
+        <ToolHeader
+          state={isDenied ? "output-denied" : state}
+          toolName={toolName}
+          type="dynamic-tool"
+        />
+        <ToolContent>
+          {isDenied ? (
+            <div className="px-4 py-3 text-muted-foreground text-sm">
+              {toolName} was denied.
+            </div>
+          ) : (
+            <>
+              {part.input !== undefined && part.input !== null && (
+                <ToolInput input={part.input} />
+              )}
+              {needsApproval && approvalId ? (
+                <ToolApprovalActions
+                  addToolApprovalResponse={addToolApprovalResponse}
+                  approvalId={approvalId}
+                  toolName={toolName}
+                />
+              ) : null}
+              {(hasOutput || state === "output-error") && (
+                <ToolOutput
+                  errorText={
+                    state === "output-error" ? part.errorText : undefined
+                  }
+                  output={hasOutput ? part.output : undefined}
+                />
+              )}
+            </>
+          )}
+        </ToolContent>
+      </Tool>
     </div>
   );
 }
@@ -192,7 +267,7 @@ const PurePreviewMessage = ({
     if (type === "text") {
       return (
         <MessageContent
-          className={cn("text-[13px] leading-[1.65]", {
+          className={cn("text-[14px] leading-[1.65]", {
             "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-2xl rounded-br-lg border border-border/30 bg-gradient-to-br from-secondary to-muted px-3.5 py-2 shadow-[var(--shadow-card)]":
               message.role === "user",
           })}
@@ -273,64 +348,12 @@ const PurePreviewMessage = ({
     }
 
     if (type === "dynamic-tool") {
-      // Agent-defined tools (any Hermes skill, MCP server or sub-agent)
-      // arrive as dynamic parts — name, input and output come from the
-      // payload, so new tools render with no code change here.
-      const { toolCallId, state } = part;
-      const toolName = part.title ?? part.toolName;
-      const approvalId = part.approval?.id;
-      const isDenied =
-        state === "output-denied" ||
-        (state === "approval-responded" && part.approval?.approved === false);
-      const widthClass = "w-[min(100%,450px)]";
-
-      if (isDenied) {
-        return (
-          <div className={widthClass} key={toolCallId}>
-            <Tool className="w-full" defaultOpen={true}>
-              <ToolHeader
-                state="output-denied"
-                toolName={toolName}
-                type="dynamic-tool"
-              />
-              <ToolContent>
-                <div className="px-4 py-3 text-muted-foreground text-sm">
-                  {toolName} was denied.
-                </div>
-              </ToolContent>
-            </Tool>
-          </div>
-        );
-      }
-
       return (
-        <div className={widthClass} key={toolCallId}>
-          <Tool className="w-full" defaultOpen={true}>
-            <ToolHeader state={state} toolName={toolName} type="dynamic-tool" />
-            <ToolContent>
-              {part.input !== undefined && part.input !== null && (
-                <ToolInput input={part.input} />
-              )}
-              {state === "approval-requested" && approvalId && (
-                <ToolApprovalActions
-                  addToolApprovalResponse={addToolApprovalResponse}
-                  approvalId={approvalId}
-                  toolName={toolName}
-                />
-              )}
-              {(state === "output-available" || state === "output-error") && (
-                <ToolOutput
-                  errorText={
-                    state === "output-error" ? part.errorText : undefined
-                  }
-                  output={
-                    state === "output-available" ? part.output : undefined
-                  }
-                />
-              )}
-            </ToolContent>
-          </Tool>
-        </div>
+        <DynamicToolMessagePart
+          addToolApprovalResponse={addToolApprovalResponse}
+          key={part.toolCallId}
+          part={part}
+        />
       );
     }
 
@@ -456,7 +479,7 @@ const PurePreviewMessage = ({
         )}
       >
         {isAssistant && (
-          <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
+          <div className="flex h-[calc(14px*1.65)] shrink-0 items-center">
             <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
               <SparklesIcon size={13} />
             </div>
@@ -481,7 +504,7 @@ export const ThinkingMessage = () => (
     data-testid="message-assistant-loading"
   >
     <div className="flex items-start gap-3">
-      <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
+      <div className="flex h-[calc(14px*1.65)] shrink-0 items-center">
         <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
           <SparklesIcon size={13} />
         </div>

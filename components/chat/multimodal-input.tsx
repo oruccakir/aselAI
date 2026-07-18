@@ -42,6 +42,7 @@ import {
   type ChatAgent,
   chatAgents,
 } from "@/lib/agent-picker";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -110,6 +111,7 @@ function PureMultimodalInput({
 }) {
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
+  const { dict } = useLocale();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
   const hasAutoFocused = useRef(false);
@@ -174,7 +176,7 @@ function PureMultimodalInput({
           setMessages(() => []);
           break;
         case "rename":
-          toast("Rename is available from the sidebar chat menu.");
+          toast(dict.slash.renameHint);
           break;
         case "agent": {
           const agentBtn = document.querySelector<HTMLButtonElement>(
@@ -191,25 +193,25 @@ function PureMultimodalInput({
           break;
         }
         case "delete":
-          toast("Delete this chat?", {
+          toast(dict.slash.deletePrompt, {
             action: {
-              label: "Delete",
+              label: dict.slash.deleteAction,
               onClick: () => {
                 // TODO(ACP): delete the chat through the agent backend.
                 router.push("/");
-                toast.success("Chat deleted");
+                toast.success(dict.sidebar.chatDeleted);
               },
             },
           });
           break;
         case "purge":
-          toast("Delete all chats?", {
+          toast(dict.slash.deleteAllPrompt, {
             action: {
-              label: "Delete all",
+              label: dict.slash.deleteAllAction,
               onClick: () => {
                 // TODO(ACP): delete all chats through the agent backend.
                 router.push("/");
-                toast.success("All chats deleted");
+                toast.success(dict.sidebar.allChatsDeleted);
               },
             },
           });
@@ -218,7 +220,7 @@ function PureMultimodalInput({
           break;
       }
     },
-    [resolvedTheme, router, setInput, setMessages, setTheme]
+    [dict, resolvedTheme, router, setInput, setMessages, setTheme]
   );
 
   const submitForm = useCallback(() => {
@@ -387,9 +389,9 @@ function PureMultimodalInput({
     if (status === "ready" || status === "error") {
       submitForm();
     } else {
-      toast.error("Please wait for the model to finish its response!");
+      toast.error(dict.composer.waitForModel);
     }
-  }, [attachments.length, handleSlashSelect, input, status, submitForm]);
+  }, [attachments.length, dict, handleSlashSelect, input, status, submitForm]);
 
   const handleTextareaKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -439,13 +441,13 @@ function PureMultimodalInput({
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {editingMessage && onCancelEdit ? (
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-          <span>Editing message</span>
+          <span>{dict.composer.editingMessage}</span>
           <button
             className="rounded px-1.5 py-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
             onMouseDown={handleCancelEditMouseDown}
             type="button"
           >
-            Cancel
+            {dict.composer.cancel}
           </button>
         </div>
       ) : null}
@@ -520,7 +522,9 @@ function PureMultimodalInput({
           onChange={handleInput}
           onKeyDown={handleTextareaKeyDown}
           placeholder={
-            editingMessage ? "Edit your message..." : "Ask anything..."
+            editingMessage
+              ? dict.composer.editPlaceholder
+              : dict.composer.placeholder
           }
           ref={textareaRef}
           value={input}
@@ -670,6 +674,7 @@ function AgentSelectorOption({
   selectedAgentId: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
+  const { dict } = useLocale();
   // Each registry agent brings its own icon; fall back to a neutral bot.
   const AgentIcon = agent.icon ?? BotIcon;
   const withTooltip = (icon: ReactNode, label: string) => (
@@ -715,7 +720,10 @@ function AgentSelectorOption({
             )
           : null}
         {capabilities[agent.id]?.vision
-          ? withTooltip(<EyeIcon className="size-3.5" />, "Supports vision")
+          ? withTooltip(
+              <EyeIcon className="size-3.5" />,
+              dict.agentPicker.supportsVision
+            )
           : null}
         {capabilities[agent.id]?.reasoning
           ? withTooltip(
@@ -736,6 +744,7 @@ function PureAgentSelectorCompact({
   onAgentChange?: (agentId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { dict } = useLocale();
   // TODO(ACP): agent list and capabilities should come from the connected
   // agent (was: GET /api/models).
   const selectedAgent =
@@ -757,9 +766,9 @@ function PureAgentSelectorCompact({
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent commandDefaultValue={selectedAgent.id}>
-        <ModelSelectorInput placeholder="Search agents..." />
+        <ModelSelectorInput placeholder={dict.agentPicker.searchPlaceholder} />
         <ModelSelectorList>
-          <ModelSelectorGroup heading="Agents">
+          <ModelSelectorGroup heading={dict.agentPicker.groupHeading}>
             {chatAgents.map((agent) => (
               <AgentSelectorOption
                 agent={agent}

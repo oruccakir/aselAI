@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useLocale } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils";
 import {
   CheckCircleFillIcon,
@@ -28,21 +30,21 @@ export type VisibilityType = "private" | "public";
 
 const visibilities: Array<{
   id: VisibilityType;
-  label: string;
-  description: string;
+  label: (dict: Dictionary) => string;
+  description: (dict: Dictionary) => string;
   icon: ReactNode;
 }> = [
   {
-    description: "Only you can access this chat",
+    description: (dict) => dict.visibility.privateDescription,
     icon: <LockIcon />,
     id: "private",
-    label: "Private",
+    label: (dict) => dict.visibility.privateLabel,
   },
   {
-    description: "Anyone with the link can access this chat",
+    description: (dict) => dict.visibility.publicDescription,
     icon: <GlobeIcon />,
     id: "public",
-    label: "Public",
+    label: (dict) => dict.visibility.publicLabel,
   },
 ];
 
@@ -57,6 +59,7 @@ function VisibilitySelectorItem({
   visibility: (typeof visibilities)[number];
   visibilityType: VisibilityType;
 }) {
+  const { dict } = useLocale();
   const handleSelect = useCallback(() => {
     setVisibilityType(visibility.id);
     setOpen(false);
@@ -70,12 +73,10 @@ function VisibilitySelectorItem({
       onSelect={handleSelect}
     >
       <div className="flex flex-col items-start gap-1">
-        {visibility.label}
-        {visibility.description ? (
-          <div className="text-muted-foreground text-xs">
-            {visibility.description}
-          </div>
-        ) : null}
+        {visibility.label(dict)}
+        <div className="text-muted-foreground text-xs">
+          {visibility.description(dict)}
+        </div>
       </div>
       <div className="text-foreground opacity-0 group-data-[active=true]/item:opacity-100 dark:text-foreground">
         <CheckCircleFillIcon />
@@ -93,6 +94,7 @@ export function VisibilitySelector({
   selectedVisibilityType: VisibilityType;
 } & React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
+  const { dict } = useLocale();
 
   const { visibilityType, setVisibilityType } = useChatVisibility({
     chatId,
@@ -120,7 +122,7 @@ export function VisibilitySelector({
           variant="outline"
         >
           {selectedVisibility?.icon}
-          <span className="md:sr-only">{selectedVisibility?.label}</span>
+          <span className="md:sr-only">{selectedVisibility?.label(dict)}</span>
           <ChevronDownIcon />
         </Button>
       </DropdownMenuTrigger>

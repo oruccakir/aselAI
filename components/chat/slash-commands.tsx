@@ -10,11 +10,13 @@ import {
   XIcon,
 } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useLocale } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils";
 
 export type SlashCommand = {
   name: string;
-  description: string;
+  descriptionKey: keyof Dictionary["slash"];
   icon: ReactNode;
   action: string;
   shortcut?: string;
@@ -23,43 +25,43 @@ export type SlashCommand = {
 export const slashCommands: SlashCommand[] = [
   {
     action: "new",
-    description: "Start a new chat",
+    descriptionKey: "new",
     icon: <PenSquareIcon className="size-3.5" />,
     name: "new",
   },
   {
     action: "clear",
-    description: "Clear current chat",
+    descriptionKey: "clear",
     icon: <Trash2Icon className="size-3.5" />,
     name: "clear",
   },
   {
     action: "rename",
-    description: "Rename current chat",
+    descriptionKey: "rename",
     icon: <PenLineIcon className="size-3.5" />,
     name: "rename",
   },
   {
     action: "agent",
-    description: "Switch the agent",
+    descriptionKey: "agent",
     icon: <ListIcon className="size-3.5" />,
     name: "agent",
   },
   {
     action: "theme",
-    description: "Toggle dark/light mode",
+    descriptionKey: "theme",
     icon: <PaletteIcon className="size-3.5" />,
     name: "theme",
   },
   {
     action: "delete",
-    description: "Delete current chat",
+    descriptionKey: "delete",
     icon: <XIcon className="size-3.5" />,
     name: "delete",
   },
   {
     action: "purge",
-    description: "Delete all chats",
+    descriptionKey: "purge",
     icon: <BombIcon className="size-3.5" />,
     name: "purge",
   },
@@ -83,6 +85,7 @@ function SlashCommandMenuItem({
   onSelect: (command: SlashCommand) => void;
   selectedIndex: number;
 }) {
+  const { dict } = useLocale();
   const handleClick = useCallback(() => {
     onSelect(cmd);
   }, [cmd, onSelect]);
@@ -110,7 +113,7 @@ function SlashCommandMenuItem({
       </div>
       <span className="font-mono text-[14px] text-foreground">/{cmd.name}</span>
       <span className="text-[12px] text-muted-foreground/50">
-        {cmd.description}
+        {dict.slash[cmd.descriptionKey]}
       </span>
       {cmd.shortcut ? (
         <span className="ml-auto text-[11px] text-muted-foreground/30">
@@ -127,6 +130,7 @@ export function SlashCommandMenu({
   onClose: _onClose,
   selectedIndex,
 }: SlashCommandMenuProps) {
+  const { dict } = useLocale();
   const menuRef = useRef<HTMLDivElement>(null);
   const filtered = slashCommands.filter((cmd) =>
     cmd.name.startsWith(query.toLowerCase())
@@ -149,7 +153,7 @@ export function SlashCommandMenu({
       ref={menuRef}
     >
       <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/40">
-        Commands
+        {dict.slash.commandsHeading}
       </div>
       <div className="max-h-64 overflow-y-auto pb-1 no-scrollbar">
         {filtered.map((cmd, index) => (

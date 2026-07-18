@@ -51,6 +51,10 @@ Env vars (all optional, see `.env.example`): `HERMES_ACP_HOME` (default `~/.herm
 
 Still stubbed with `TODO(ACP)`: votes, document artifact persistence, attachments/upload, delete chat / delete-all (deletion needs a `session/delete` ACP method on the Hermes side — separate issue).
 
+## i18n (TR/EN)
+
+No routing-based i18n (App Router has none built in; a `[lang]` segment would break the `/chat/<agentId>:<sessionId>` URL flow). Instead `lib/i18n/dictionaries.ts` holds typed `en`/`tr` dictionaries (`en` is the source of truth — `tr` must satisfy `Dictionary`, so missing keys are type errors) and `lib/i18n/locale-context.tsx` provides `useLocale()` (`{ locale, setLocale, dict }`), persisting the choice in a `locale` cookie. SSR always renders English; the cookie is applied after mount (next-themes-style trade-off). The header `LanguageSelector` mirrors `ThemeSelector`. Agent-specific copy (`greetingTagline`, `suggestions` in the registry) is stored as per-locale records — add both languages when adding an agent. New user-facing strings go in BOTH dictionaries, never inline.
+
 ## Conventions
 - Lint/format: Biome via ultracite, 2-space indent. `biome.jsonc` **excludes** `components/ui`, `components/ai-elements`, `components/elements`, `lib/utils.ts`, and `hooks/use-mobile.ts` — vendored files; match their existing style, don't reformat.
 - Path alias: `@/*` → repo root.

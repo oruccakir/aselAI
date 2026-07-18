@@ -62,7 +62,7 @@ export function Preview() {
         </div>
 
         <div className="grid w-full max-w-md grid-cols-2 gap-2">
-          {ACP_AGENTS[0].suggestions.map((suggestion) => (
+          {ACP_AGENTS[0].suggestions.en.map((suggestion) => (
             <PreviewSuggestionButton
               key={suggestion}
               onAction={handleAction}

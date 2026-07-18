@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useActiveChat } from "@/hooks/use-active-chat";
 import { getChatHistoryPaginationKey } from "@/lib/chat-history";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { AppUser } from "@/lib/types";
 import {
   AlertDialog,
@@ -49,6 +50,7 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
   const { setOpenMobile, toggleSidebar } = useSidebar();
   const { currentAgentId } = useActiveChat();
   const { mutate } = useSWRConfig();
+  const { dict } = useLocale();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const closeMobile = useCallback(() => {
@@ -82,8 +84,8 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
     // TODO(ACP): delete all chats through the agent backend (needs a
     // session/delete ACP method on the Hermes side).
 
-    toast.success("All chats deleted");
-  }, [mutate, router, currentAgentId]);
+    toast.success(dict.sidebar.allChatsDeleted);
+  }, [mutate, router, currentAgentId, dict]);
 
   return (
     <>
@@ -111,7 +113,7 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
                     </SidebarMenuButton>
                   </TooltipTrigger>
                   <TooltipContent className="hidden md:block" side="right">
-                    Open sidebar
+                    {dict.sidebar.openSidebar}
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -135,10 +137,10 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
                   <SidebarMenuButton
                     className="h-8 rounded-lg border border-sidebar-border text-[14px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     onClick={handleNewChat}
-                    tooltip="New Chat"
+                    tooltip={dict.sidebar.newChat}
                   >
                     <PenSquareIcon className="size-4" />
-                    <span className="font-medium">New chat</span>
+                    <span className="font-medium">{dict.sidebar.newChat}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {user ? (
@@ -146,10 +148,12 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
                     <SidebarMenuButton
                       className="rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive"
                       onClick={handleShowDeleteAllDialog}
-                      tooltip="Delete All Chats"
+                      tooltip={dict.sidebar.deleteAllChats}
                     >
                       <TrashIcon className="size-4" />
-                      <span className="text-[14px]">Delete all</span>
+                      <span className="text-[14px]">
+                        {dict.slash.deleteAllAction}
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}
@@ -170,16 +174,17 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all chats?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {dict.dialogs.deleteAllChatsTitle}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all
-              your chats and remove them from our servers.
+              {dict.dialogs.deleteAllChatsDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{dict.dialogs.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAll}>
-              Delete All
+              {dict.sidebar.deleteAllChats}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

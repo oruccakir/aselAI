@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { ChatMessage } from "@/lib/types";
 import {
   MessageAction as Action,
@@ -18,6 +19,7 @@ export function PureMessageActions({
   onEdit?: () => void;
 }) {
   const [_, copyToClipboard] = useCopyToClipboard();
+  const { dict } = useLocale();
 
   const textFromParts = message.parts
     ?.filter((part) => part.type === "text")
@@ -27,13 +29,13 @@ export function PureMessageActions({
 
   const handleCopy = useCallback(async () => {
     if (!textFromParts) {
-      toast.error("There's no text to copy!");
+      toast.error(dict.messageActions.noTextToCopy);
       return;
     }
 
     await copyToClipboard(textFromParts);
-    toast.success("Copied to clipboard!");
-  }, [copyToClipboard, textFromParts]);
+    toast.success(dict.messageActions.copiedToClipboard);
+  }, [copyToClipboard, dict, textFromParts]);
 
   if (isLoading) {
     return null;
@@ -48,7 +50,7 @@ export function PureMessageActions({
               className="size-7 text-muted-foreground/50 hover:text-foreground"
               data-testid="message-edit-button"
               onClick={onEdit}
-              tooltip="Edit"
+              tooltip={dict.messageActions.edit}
             >
               <PencilEditIcon />
             </Action>
@@ -56,7 +58,7 @@ export function PureMessageActions({
           <Action
             className="size-7 text-muted-foreground/50 hover:text-foreground"
             onClick={handleCopy}
-            tooltip="Copy"
+            tooltip={dict.messageActions.copy}
           >
             <CopyIcon />
           </Action>
@@ -70,7 +72,7 @@ export function PureMessageActions({
       <Action
         className="text-muted-foreground/50 hover:text-foreground"
         onClick={handleCopy}
-        tooltip="Copy"
+        tooltip={dict.messageActions.copy}
       >
         <CopyIcon />
       </Action>

@@ -9,6 +9,8 @@
 @plugin "@tailwindcss/typography";
 
 @theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -145,6 +147,7 @@
     @apply border-border ring-0;
   }
   body {
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "ss01", "ss02", "cv01";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -385,7 +388,7 @@ textarea:focus-visible {
   font-family:
     "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", ui-monospace,
     monospace !important;
-  @apply bg-transparent! outline-hidden! text-[13px]! leading-[1.6]!;
+  @apply bg-transparent! outline-hidden! text-[14px]! leading-[1.6]!;
 }
 
 .cm-gutters {

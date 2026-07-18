@@ -143,7 +143,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[13px] text-sidebar-foreground/60">
+          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[14px] text-sidebar-foreground/60">
             Login to save and revisit previous chats!
           </div>
         </SidebarGroupContent>
@@ -187,7 +187,7 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
           History
         </SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[13px] text-sidebar-foreground/60">
+          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[14px] text-sidebar-foreground/60">
             Your conversations will appear here once you start chatting!
           </div>
         </SidebarGroupContent>

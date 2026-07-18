@@ -1,3 +1,4 @@
+import { BotIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
@@ -67,7 +68,7 @@ export const ModelSelectorInput = ({
   className,
   ...props
 }: ModelSelectorInputProps) => (
-  <CommandInput className={cn("h-auto py-2.5 text-[13px]", className)} {...props} />
+  <CommandInput className={cn("h-auto py-2.5 text-[14px]", className)} {...props} />
 );
 
 export type ModelSelectorListProps = ComponentProps<typeof CommandList>;
@@ -91,7 +92,7 @@ export const ModelSelectorGroup = (props: ModelSelectorGroupProps) => (
 export type ModelSelectorItemProps = ComponentProps<typeof CommandItem>;
 
 export const ModelSelectorItem = ({ className, ...props }: ModelSelectorItemProps) => (
-  <CommandItem className={cn("w-full text-[13px] rounded-lg", className)} {...props} />
+  <CommandItem className={cn("w-full text-[14px] rounded-lg", className)} {...props} />
 );
 
 export type ModelSelectorShortcutProps = ComponentProps<typeof CommandShortcut>;
@@ -109,7 +110,7 @@ export const ModelSelectorSeparator = (props: ModelSelectorSeparatorProps) => (
 );
 
 export type ModelSelectorLogoProps = Omit<
-  ComponentProps<"img">,
+  ComponentProps<typeof BotIcon>,
   "src" | "alt"
 > & {
   provider:
@@ -173,18 +174,17 @@ export type ModelSelectorLogoProps = Omit<
     | (string & {});
 };
 
+// Offline-friendly: agents speak ACP, so there is no provider logo to fetch
+// from models.dev — render a local icon instead of a remote <img>.
 export const ModelSelectorLogo = ({
   provider,
   className,
   ...props
 }: ModelSelectorLogoProps) => (
-  <img
+  <BotIcon
+    aria-label={`${provider} logo`}
+    className={cn("size-4", className)}
     {...props}
-    alt={`${provider} logo`}
-    className={cn("size-4 dark:invert", className)}
-    height={16}
-    src={`https://models.dev/logos/${provider}.svg`}
-    width={16}
   />
 );
 

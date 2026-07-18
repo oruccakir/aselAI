@@ -126,7 +126,7 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="h-8 rounded-lg border border-sidebar-border text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    className="h-8 rounded-lg border border-sidebar-border text-[14px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     onClick={handleNewChat}
                     tooltip="New Chat"
                   >
@@ -142,7 +142,7 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
                       tooltip="Delete All Chats"
                     >
                       <TrashIcon className="size-4" />
-                      <span className="text-[13px]">Delete all</span>
+                      <span className="text-[14px]">Delete all</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}

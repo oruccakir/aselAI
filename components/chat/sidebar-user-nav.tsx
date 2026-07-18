@@ -46,7 +46,7 @@ export function SidebarUserNav({ user }: { user: AppUser }) {
                   background: `linear-gradient(135deg, oklch(0.35 0.08 ${emailToHue(user.email)}), oklch(0.25 0.05 ${emailToHue(user.email) + 40}))`,
                 }}
               />
-              <span className="truncate text-[13px]" data-testid="user-email">
+              <span className="truncate text-[14px]" data-testid="user-email">
                 Guest
               </span>
               <ChevronUp className="ml-auto size-3.5 text-sidebar-foreground/50" />
@@ -58,7 +58,7 @@ export function SidebarUserNav({ user }: { user: AppUser }) {
             side="top"
           >
             <DropdownMenuItem
-              className="cursor-pointer text-[13px]"
+              className="cursor-pointer text-[14px]"
               data-testid="user-nav-item-theme"
               onSelect={handleThemeSelect}
             >

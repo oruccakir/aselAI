@@ -20,6 +20,7 @@ export const viewport = {
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
 const DARK_THEME_COLOR = "hsl(240deg 10% 3.92%)";
 const ASEL_THEME_COLOR = "hsl(225deg 35% 9%)";
+const TACTICAL_THEME_COLOR = "hsl(45deg 12% 6%)";
 const THEME_COLOR_SCRIPT = `\
 (function() {
   var html = document.documentElement;
@@ -32,6 +33,8 @@ const THEME_COLOR_SCRIPT = `\
   function updateThemeColor() {
     if (html.classList.contains('asel')) {
       meta.setAttribute('content', '${ASEL_THEME_COLOR}');
+    } else if (html.classList.contains('tactical')) {
+      meta.setAttribute('content', '${TACTICAL_THEME_COLOR}');
     } else if (html.classList.contains('dark')) {
       meta.setAttribute('content', '${DARK_THEME_COLOR}');
     } else {
@@ -68,7 +71,7 @@ export default function RootLayout({
           defaultTheme="system"
           disableTransitionOnChange
           enableSystem
-          themes={["light", "dark", "asel"]}
+          themes={["light", "dark", "asel", "tactical"]}
         >
           <LocaleProvider>
             <TooltipProvider>{children}</TooltipProvider>

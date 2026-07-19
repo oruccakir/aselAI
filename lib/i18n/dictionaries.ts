@@ -237,10 +237,10 @@ const tr: Dictionary = {
     darkDescription: "Loş ışık paleti",
     light: "Açık",
     lightDescription: "Aydınlık gündüz paleti",
-    nvg: "Tactical Green",
+    nvg: "Taktiksel Yeşil",
     nvgDescription: "Gece görüşü fosfor yeşili paleti",
-    tactical: "Tactical Amber",
-    tacticalDescription: "Gece operasyonu low-light amber paleti",
+    tactical: "Taktiksel Amber",
+    tacticalDescription: "Gece operasyonu loş ışık amber paleti",
   },
   toasts: {
     genericError: "Bir hata oluştu!",

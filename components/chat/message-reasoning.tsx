@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Reasoning,
   ReasoningContent,
@@ -16,18 +15,14 @@ export function MessageReasoning({
   isLoading,
   reasoning,
 }: MessageReasoningProps) {
-  const [hasBeenStreaming, setHasBeenStreaming] = useState(isLoading);
-
-  useEffect(() => {
-    if (isLoading) {
-      setHasBeenStreaming(true);
-    }
-  }, [isLoading]);
-
+  // Collapsed by default — the operator opens the reasoning trace on demand.
+  // defaultOpen={false} opts out of the Reasoning component's auto-open AND
+  // auto-close (see the isExplicitlyClosed guard in ai-elements/reasoning),
+  // so the box stays where the user puts it.
   return (
     <Reasoning
       data-testid="message-reasoning"
-      defaultOpen={hasBeenStreaming}
+      defaultOpen={false}
       isStreaming={isLoading}
     >
       <ReasoningTrigger />

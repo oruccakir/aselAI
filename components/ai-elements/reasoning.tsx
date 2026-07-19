@@ -104,13 +104,16 @@ export const Reasoning = memo(
       }
     }, [isStreaming, isOpen, setIsOpen, isExplicitlyClosed]);
 
-    // Auto-close when streaming ends (once only, and only if it ever streamed)
+    // Auto-close when streaming ends (once only, and only if it ever streamed).
+    // Skip for explicitly-closed boxes (defaultOpen={false}) so the user's
+    // manual open isn't yanked shut ~1s after streaming ends.
     useEffect(() => {
       if (
         hasEverStreamedRef.current &&
         !isStreaming &&
         isOpen &&
-        !hasAutoClosed
+        !hasAutoClosed &&
+        !isExplicitlyClosed
       ) {
         const timer = setTimeout(() => {
           setIsOpen(false);

@@ -1,5 +1,7 @@
+import { DownloadIcon } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback } from "react";
+import { exportChatById } from "@/components/chat/export-chat";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useLocale } from "@/lib/i18n/locale-context";
 import type { Chat } from "@/lib/types";
@@ -59,6 +61,10 @@ const PureChatItem = ({
     onDelete(chat.id);
   }, [chat.id, onDelete]);
 
+  const handleExport = useCallback(async () => {
+    await exportChatById(chat.id, dict.export);
+  }, [chat.id, dict.export]);
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -115,6 +121,11 @@ const PureChatItem = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+
+          <DropdownMenuItem className="cursor-pointer" onSelect={handleExport}>
+            <DownloadIcon size={12} />
+            <span>{dict.export.button}</span>
+          </DropdownMenuItem>
 
           <DropdownMenuItem onSelect={handleDelete} variant="destructive">
             <TrashIcon />

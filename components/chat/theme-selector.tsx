@@ -1,6 +1,12 @@
 "use client";
 
-import { CrosshairIcon, MoonIcon, PaletteIcon, SunIcon } from "lucide-react";
+import {
+  CrosshairIcon,
+  MoonIcon,
+  PaletteIcon,
+  RadarIcon,
+  SunIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
@@ -16,7 +22,7 @@ import { useLocale } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils";
 import { CheckCircleFillIcon, ChevronDownIcon } from "./icons";
 
-type ThemeId = "light" | "dark" | "asel" | "tactical";
+type ThemeId = "light" | "dark" | "asel" | "tactical" | "nvg";
 
 const themes: Array<{
   description: (dict: Dictionary) => string;
@@ -47,6 +53,12 @@ const themes: Array<{
     icon: <CrosshairIcon size={16} />,
     id: "tactical",
     label: (dict) => dict.themes.tactical,
+  },
+  {
+    description: (dict) => dict.themes.nvgDescription,
+    icon: <RadarIcon size={16} />,
+    id: "nvg",
+    label: (dict) => dict.themes.nvg,
   },
 ];
 
@@ -113,23 +125,25 @@ export function ThemeSelector({
           size="sm"
           variant="outline"
         >
-          <SunIcon className="size-4 dark:hidden asel:hidden tactical:hidden" />
-          <MoonIcon className="hidden size-4 dark:block asel:hidden tactical:hidden" />
-          <PaletteIcon className="hidden size-4 asel:block tactical:hidden" />
-          <CrosshairIcon className="hidden size-4 tactical:block" />
+          <SunIcon className="size-4 dark:hidden asel:hidden tactical:hidden nvg:hidden" />
+          <MoonIcon className="hidden size-4 dark:block asel:hidden tactical:hidden nvg:hidden" />
+          <PaletteIcon className="hidden size-4 asel:block tactical:hidden nvg:hidden" />
+          <CrosshairIcon className="hidden size-4 tactical:block nvg:hidden" />
+          <RadarIcon className="hidden size-4 nvg:block" />
           <span className="md:sr-only">
-            <span className="dark:hidden asel:hidden tactical:hidden">
+            <span className="dark:hidden asel:hidden tactical:hidden nvg:hidden">
               {dict.themes.light}
             </span>
-            <span className="hidden dark:block asel:hidden tactical:hidden">
+            <span className="hidden dark:block asel:hidden tactical:hidden nvg:hidden">
               {dict.themes.dark}
             </span>
-            <span className="hidden asel:block tactical:hidden">
+            <span className="hidden asel:block tactical:hidden nvg:hidden">
               {dict.themes.asel}
             </span>
-            <span className="hidden tactical:block">
+            <span className="hidden tactical:block nvg:hidden">
               {dict.themes.tactical}
             </span>
+            <span className="hidden nvg:block">{dict.themes.nvg}</span>
           </span>
           <ChevronDownIcon />
         </Button>

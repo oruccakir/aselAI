@@ -10,6 +10,7 @@ export type ExportLabels = {
   assistant: string;
   attachment: string;
   button: string;
+  exportError: string;
   exportedAt: string;
   messages: string;
   session: string;
@@ -129,7 +130,10 @@ function serializePart(part: AnyPart, labels: ExportLabels): string | null {
   }
 }
 
-function firstUserText(messages: ChatMessage[], limit = 80): string | null {
+export function firstUserText(
+  messages: ChatMessage[],
+  limit = 80
+): string | null {
   for (const message of messages) {
     if (message.role !== "user") {
       continue;

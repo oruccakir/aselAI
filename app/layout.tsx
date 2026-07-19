@@ -10,7 +10,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   description: "ASELSAN Agent Intelligence",
   metadataBase: new URL("https://www.aselsan.com/tr/"),
-  title: "ASELSAN AI",
+  title: "ASELSAN AGENT",
 };
 
 export const viewport = {

@@ -1,6 +1,5 @@
 "use client";
 
-import { LanguagesIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +75,9 @@ export function LanguageSelector({
 }: React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
   const { locale } = useLocale();
+  const currentFlag = languages.find(
+    (language) => language.id === locale
+  )?.flag;
 
   return (
     <DropdownMenu onOpenChange={setOpen} open={open}>
@@ -92,7 +94,7 @@ export function LanguageSelector({
           size="sm"
           variant="outline"
         >
-          <LanguagesIcon className="size-4" />
+          <span aria-hidden="true">{currentFlag}</span>
           <span className="uppercase md:sr-only">{locale}</span>
           <ChevronDownIcon />
         </Button>

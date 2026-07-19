@@ -97,6 +97,8 @@ const en = {
     darkDescription: "Dimmed low-light palette",
     light: "Light",
     lightDescription: "Bright daytime palette",
+    tactical: "Tactical Amber",
+    tacticalDescription: "Night-ops low-light amber palette",
   },
   toasts: {
     genericError: "Oops, an error occurred!",
@@ -199,6 +201,8 @@ const tr: Dictionary = {
     darkDescription: "Loş ışık paleti",
     light: "Açık",
     lightDescription: "Aydınlık gündüz paleti",
+    tactical: "Tactical Amber",
+    tacticalDescription: "Gece operasyonu low-light amber paleti",
   },
   toasts: {
     genericError: "Bir hata oluştu!",

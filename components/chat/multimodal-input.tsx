@@ -37,6 +37,7 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
+import { AselsanLogo } from "@/components/aselsan-logo";
 import { DEFAULT_AGENT_ID } from "@/lib/acp/agents";
 import {
   type AgentCapabilities,
@@ -151,6 +152,16 @@ function PureMultimodalInput({
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashIndex, setSlashIndex] = useState(0);
+  // Faint ASELSAN watermark behind the empty textarea (classified-doc feel);
+  // fades out the moment the operator focuses or starts typing.
+  const [textareaFocused, setTextareaFocused] = useState(false);
+  const showWatermark = !input.trim() && !textareaFocused;
+  const handleTextareaFocus = useCallback(() => {
+    setTextareaFocused(true);
+  }, []);
+  const handleTextareaBlur = useCallback(() => {
+    setTextareaFocused(false);
+  }, []);
 
   const handleInput = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -576,10 +587,21 @@ function PureMultimodalInput({
             ))}
           </div>
         )}
+        <AselsanLogo
+          animated={false}
+          className={cn(
+            "pointer-events-none absolute inset-0 m-auto h-[248px] w-auto transition-opacity duration-300",
+            showWatermark
+              ? "opacity-[0.13] dark:opacity-[0.15]"
+              : "opacity-0 dark:opacity-0"
+          )}
+        />
         <PromptInputTextarea
           className="min-h-24 text-[14px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/55"
           data-testid="multimodal-input"
+          onBlur={handleTextareaBlur}
           onChange={handleInput}
+          onFocus={handleTextareaFocus}
           onKeyDown={handleTextareaKeyDown}
           placeholder={
             editingMessage

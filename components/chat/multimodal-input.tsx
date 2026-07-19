@@ -24,6 +24,8 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { useSWRConfig } from "swr";
+import { unstable_serialize } from "swr/infinite";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import {
   ModelSelector,
@@ -42,6 +44,7 @@ import {
   type ChatAgent,
   chatAgents,
 } from "@/lib/agent-picker";
+import { getChatHistoryPaginationKey } from "@/lib/chat-history";
 import { useLocale } from "@/lib/i18n/locale-context";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -110,6 +113,7 @@ function PureMultimodalInput({
   isLoading?: boolean;
 }) {
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const { setTheme, resolvedTheme } = useTheme();
   const { dict } = useLocale();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -197,9 +201,36 @@ function PureMultimodalInput({
             action: {
               label: dict.slash.deleteAction,
               onClick: () => {
-                // TODO(ACP): delete the chat through the agent backend.
+                // The URL carries the composite <agentId>:<sessionId> once
+                // the session exists (the chatId prop stays the client UUID
+                // while the chat is live). No colon ⇒ the chat never reached
+                // the agent, so there is no server-side session to delete.
+                const match = window.location.pathname.match(/\/chat\/([^/]+)/);
+                const urlChatId = match ? decodeURIComponent(match[1]) : null;
                 router.push("/");
-                toast.success(dict.sidebar.chatDeleted);
+                if (!urlChatId?.includes(":")) {
+                  toast.success(dict.sidebar.chatDeleted);
+                  return;
+                }
+                toast.promise(
+                  fetch(`/api/chat?id=${encodeURIComponent(urlChatId)}`, {
+                    method: "DELETE",
+                  }).then((response) => {
+                    if (!response.ok) {
+                      throw new Error(dict.sidebar.deleteChatFailed);
+                    }
+                    mutate(
+                      unstable_serialize(
+                        getChatHistoryPaginationKey(selectedAgentId)
+                      )
+                    );
+                  }),
+                  {
+                    error: dict.sidebar.deleteChatFailed,
+                    loading: dict.sidebar.deletingChat,
+                    success: dict.sidebar.chatDeleted,
+                  }
+                );
               },
             },
           });
@@ -209,9 +240,29 @@ function PureMultimodalInput({
             action: {
               label: dict.slash.deleteAllAction,
               onClick: () => {
-                // TODO(ACP): delete all chats through the agent backend.
                 router.push("/");
-                toast.success(dict.sidebar.allChatsDeleted);
+                toast.promise(
+                  fetch(
+                    `/api/history?agent=${encodeURIComponent(selectedAgentId)}`,
+                    { method: "DELETE" }
+                  ).then((response) => {
+                    if (!response.ok) {
+                      throw new Error(dict.sidebar.deleteAllChatsFailed);
+                    }
+                    mutate(
+                      unstable_serialize(
+                        getChatHistoryPaginationKey(selectedAgentId)
+                      ),
+                      [],
+                      { revalidate: false }
+                    );
+                  }),
+                  {
+                    error: dict.sidebar.deleteAllChatsFailed,
+                    loading: dict.sidebar.deletingAllChats,
+                    success: dict.sidebar.allChatsDeleted,
+                  }
+                );
               },
             },
           });
@@ -220,7 +271,16 @@ function PureMultimodalInput({
           break;
       }
     },
-    [dict, resolvedTheme, router, setInput, setMessages, setTheme]
+    [
+      dict,
+      mutate,
+      resolvedTheme,
+      router,
+      selectedAgentId,
+      setInput,
+      setMessages,
+      setTheme,
+    ]
   );
 
   const submitForm = useCallback(() => {

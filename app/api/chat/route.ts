@@ -108,3 +108,26 @@ export async function POST(request: Request) {
 
   return createUIMessageStreamResponse({ stream });
 }
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id") ?? "";
+
+  // Only composite ids map to an agent session; a plain UUID chat never
+  // reached the agent, so there is nothing to delete server-side.
+  const composite = splitChatId(id);
+  if (!composite) {
+    return Response.json({ deleted: false });
+  }
+
+  try {
+    const client = getAcpClient(composite.agentId);
+    const deleted = await client.deleteSession(composite.sessionId);
+    return Response.json({ deleted });
+  } catch (error) {
+    return new ChatbotError(
+      "bad_request:api",
+      error instanceof Error ? error.message : String(error)
+    ).toResponse();
+  }
+}

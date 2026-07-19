@@ -116,18 +116,38 @@ export function SidebarHistory({ user }: { user: AppUser | undefined }) {
       router.replace("/");
     }
 
-    mutate((chatHistories) => {
-      if (chatHistories) {
-        return chatHistories.map((chatHistory) => ({
-          ...chatHistory,
-          chats: chatHistory.chats.filter((chat) => chat.id !== chatToDelete),
-        }));
+    // revalidate: false — the default post-update refetch would race the
+    // DELETE below (the agent roundtrip is slower than GET /api/history)
+    // and put the optimistically removed chat back in the list.
+    mutate(
+      (chatHistories) => {
+        if (chatHistories) {
+          return chatHistories.map((chatHistory) => ({
+            ...chatHistory,
+            chats: chatHistory.chats.filter((chat) => chat.id !== chatToDelete),
+          }));
+        }
+      },
+      { revalidate: false }
+    );
+
+    toast.promise(
+      fetch(`/api/chat?id=${encodeURIComponent(chatToDelete ?? "")}`, {
+        method: "DELETE",
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(dict.sidebar.deleteChatFailed);
+        }
+        // Now that the agent really deleted it, sync with the server list
+        // (pagination cursors / hasMore may have shifted).
+        mutate();
+      }),
+      {
+        error: dict.sidebar.deleteChatFailed,
+        loading: dict.sidebar.deletingChat,
+        success: dict.sidebar.chatDeleted,
       }
-    });
-
-    // TODO(ACP): delete the chat through the agent backend.
-
-    toast.success(dict.sidebar.chatDeleted);
+    );
   }, [deleteId, mutate, pathname, router, dict]);
 
   const handleShowDeleteDialog = useCallback((chatId: string) => {

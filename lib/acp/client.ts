@@ -422,6 +422,45 @@ export class AcpAgentClient {
     };
   }
 
+  /**
+   * Delete one session from the agent's memory + database. ACP has no
+   * standard deletion method; `_session/delete` is a protocol extension
+   * (`_`-prefixed methods route to the agent's ext_method handler) that the
+   * Hermes adapter implements. Cancels any in-flight turn first so the
+   * agent can't re-persist the session when that turn settles.
+   */
+  async deleteSession(sessionId: string): Promise<boolean> {
+    const targetSessionId = sessionId.trim();
+    if (!targetSessionId) {
+      throw new Error("sessionId is required");
+    }
+    await this.cancelActivePrompt(targetSessionId);
+    await this.ensureInitialized();
+    const res = await this.request<{ deleted?: boolean }>("_session/delete", {
+      sessionId: targetSessionId,
+    });
+    return res.deleted === true;
+  }
+
+  /**
+   * Delete every session of this agent (extension `_session/delete_all`;
+   * the Hermes adapter only removes rows with source='acp', so the agent's
+   * CLI/Telegram/cron history is untouched). Returns the removed count.
+   */
+  async deleteAllSessions(): Promise<number> {
+    await Promise.all(
+      [...this.activePrompts.keys()].map((sessionId) =>
+        this.cancelActivePrompt(sessionId)
+      )
+    );
+    await this.ensureInitialized();
+    const res = await this.request<{ deleted?: number }>(
+      "_session/delete_all",
+      {}
+    );
+    return typeof res.deleted === "number" ? res.deleted : 0;
+  }
+
   async loadSession(
     sessionId: string,
     handlers: { onUpdate?: (update: AcpUpdate) => void; signal?: AbortSignal }

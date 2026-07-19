@@ -42,3 +42,26 @@ export async function GET(request: Request) {
     ).toResponse();
   }
 }
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const agentId = searchParams.get("agent") ?? "";
+
+  if (!isAcpAgentId(agentId)) {
+    return new ChatbotError(
+      "bad_request:history",
+      `Unknown agent: ${agentId}`
+    ).toResponse();
+  }
+
+  try {
+    const client = getAcpClient(agentId);
+    const deleted = await client.deleteAllSessions();
+    return Response.json({ deleted });
+  } catch (error) {
+    return new ChatbotError(
+      "bad_request:history",
+      error instanceof Error ? error.message : String(error)
+    ).toResponse();
+  }
+}

@@ -1,0 +1,88 @@
+diff --git a/acp_adapter/server.py b/acp_adapter/server.py
+index a51db91d4..9584fbdbf 100644
+--- a/acp_adapter/server.py
++++ b/acp_adapter/server.py
+@@ -1287,6 +1287,34 @@ class HermesACPAgent(acp.Agent):
+         next_cursor = sessions[-1].session_id if has_more and sessions else None
+         return ListSessionsResponse(sessions=sessions, next_cursor=next_cursor)
+ 
++    # ---- Extension methods (`_`-prefixed JSON-RPC) --------------------------
++
++    async def ext_method(self, method: str, params: dict[str, Any]) -> dict[str, Any]:
++        """Handle `_`-prefixed extension requests (router strips the prefix).
++
++        ACP has no standard session-deletion method, so clients (aselAI web
++        UI) call these as protocol extensions:
++
++        * ``_session/delete``     — params ``{"sessionId": str}``
++        * ``_session/delete_all`` — no params; only ``source='acp'`` rows
++        """
++        if method == "session/delete":
++            session_id = params.get("sessionId") or params.get("session_id")
++            if not isinstance(session_id, str) or not session_id:
++                raise acp.RequestError.invalid_params({"sessionId": "required"})
++            deleted = await asyncio.to_thread(
++                self.session_manager.remove_session, session_id
++            )
++            logger.info("Extension session/delete %s -> deleted=%s", session_id, deleted)
++            return {"deleted": deleted}
++
++        if method == "session/delete_all":
++            count = await asyncio.to_thread(self.session_manager.remove_all_sessions)
++            logger.info("Extension session/delete_all -> removed %d sessions", count)
++            return {"deleted": count}
++
++        raise acp.RequestError.method_not_found(f"_{method}")
++
+     # ---- Prompt (core) ------------------------------------------------------
+ 
+     async def prompt(
+diff --git a/acp_adapter/session.py b/acp_adapter/session.py
+index bbe34b067..65f0e8f04 100644
+--- a/acp_adapter/session.py
++++ b/acp_adapter/session.py
+@@ -250,6 +250,44 @@ class SessionManager:
+             _clear_task_cwd(session_id)
+         return existed or db_existed
+ 
++    def remove_all_sessions(self) -> int:
++        """Remove every ACP session from memory and the database.
++
++        Only rows with ``source='acp'`` are touched — CLI/Telegram/cron
++        sessions sharing the same state.db are left alone. Returns the
++        number of distinct sessions removed.
++        """
++        with self._lock:
++            memory_ids = list(self._sessions.keys())
++            self._sessions.clear()
++        for sid in memory_ids:
++            _clear_task_cwd(sid)
++
++        db = self._get_db()
++        db_ids: List[str] = []
++        if db is not None:
++            try:
++                db_ids = [
++                    str(row["id"])
++                    for row in db.list_sessions_rich(
++                        source="acp",
++                        limit=100_000,
++                        include_children=True,
++                        project_compression_tips=False,
++                    )
++                ]
++            except Exception:
++                logger.debug("Failed to enumerate ACP sessions for bulk delete", exc_info=True)
++
++        all_ids = list(dict.fromkeys(memory_ids + db_ids))
++        if db is not None and all_ids:
++            try:
++                db.delete_sessions(all_ids)
++            except Exception:
++                logger.debug("Bulk ACP session delete failed", exc_info=True)
++        logger.info("Removed %d ACP sessions (bulk delete)", len(all_ids))
++        return len(all_ids)
++
+     def fork_session(self, session_id: str, cwd: str = ".") -> Optional[SessionState]:
+         """Deep-copy a session's history into a new session."""
+         import threading

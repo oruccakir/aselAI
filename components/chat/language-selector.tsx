@@ -1,6 +1,6 @@
 "use client";
 
-import { LetterTextIcon } from "lucide-react";
+import { BookOpenIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,7 +92,7 @@ export function LanguageSelector({
           size="sm"
           variant="outline"
         >
-          <LetterTextIcon className="size-4" />
+          <BookOpenIcon className="size-4" />
           <span className="uppercase md:sr-only">{locale}</span>
           <ChevronDownIcon />
         </Button>

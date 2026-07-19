@@ -22,7 +22,7 @@ Browser  useChat ──DefaultChatTransport──> POST /api/chat
 - **`lib/acp/chat-id.ts`** — chat id codec: composite `<agentId>:<sessionId>`; no colon ⇒ new chat (client UUID).
 - **`lib/acp/ui-stream.ts`** — per-stream mapper from ACP `sessionUpdate` kinds to UIMessageChunks (`agent_message_chunk`→text, `agent_thought_chunk`→reasoning, `tool_call(_update)`→dynamic tool parts, `x-permission-request`→`tool-approval-request`, `plan`→transient waiting-status). Capability-agnostic by design: new agent tools surface with no code change.
 - **`lib/acp/session-display.ts`** — session summaries for the sidebar; `acpUpdatesToUIMessages` converts a `session/load` replay into parts-based `ChatMessage`s.
-- **Routes** (all `runtime = "nodejs"`): `POST /api/chat` (prompt turn; emits transient `data-session-id` with the composite id on first send), `GET /api/history?agent=&cursor=` (session/list → `{ chats, hasMore, nextCursor }`), `GET /api/messages?chatId=` (session/load replay), `POST /api/acp/permission` (out-of-band approval answer).
+- **Routes** (all `runtime = "nodejs"`): `POST /api/chat` (prompt turn; emits transient `data-session-id` with the composite id on first send), `GET /api/history?agent=&cursor=` (session/list → `{ chats, hasMore, nextCursor }`), `GET /api/messages?chatId=` (session/load replay), `POST /api/acp/permission` (out-of-band approval answer), `DELETE /api/chat?id=` (delete one session), `DELETE /api/history?agent=` (delete all of an agent's sessions). The delete routes ride the ACP extension methods `_session/delete(_all)` which are NOT upstream Hermes — they live as a local change in `~/.hermes/hermes-agent`, kept re-applicable via `patches/hermes-acp-session-delete.patch` (see `patches/README.md`).
 
 ### The chat id / session flow
 New chat: client UUID → `POST /api/chat` → `session/new` → server streams `data-session-id` → `hooks/use-active-chat.tsx` stores it in `resolvedChatIdRef`, rewrites the URL via `history.replaceState`, and the transport sends `resolvedChatIdRef.current ?? id` on every subsequent send — this is what keeps a conversation on ONE session. The client-side `useChat` id deliberately stays the original UUID while the chat is live (`isLiveResolvedChat` guard) because `usePathname` tracks native `replaceState` in Next 16 and an id change would remount the chat mid-stream. Cold-opening `/chat/<agentId>:<sessionId>` fetches `/api/messages` (session/load).
@@ -49,7 +49,7 @@ Env vars (all optional, see `.env.example`): `HERMES_ACP_HOME` (default `~/.herm
 
 `app/(chat)/page.tsx` and `chat/[id]/page.tsx` return `null`; the UI is mounted by `app/(chat)/layout.tsx` (`ActiveChatProvider` → `SidebarProvider` → `AppSidebar` + `ChatShell`). `hooks/use-active-chat.tsx` owns the `useChat` state and the memoized `DefaultChatTransport` (mutable state — agent id, resolved chat id — is read through refs at send time, never closures). `components/chat/data-stream-handler.tsx` drains custom `data-*` parts for the artifact state machine. `lib/types.ts` declares `ChatMessage` (with `CustomUIDataTypes` incl. `"session-id"`) and local `Chat`/`Document`/`Vote`/`Suggestion` types. `ChatbotError` (`lib/errors.ts`) stays the error envelope for everything fetch-shaped.
 
-Still stubbed with `TODO(ACP)`: votes, document artifact persistence, attachments/upload, delete chat / delete-all (deletion needs a `session/delete` ACP method on the Hermes side — separate issue).
+Still stubbed with `TODO(ACP)`: votes, document artifact persistence, attachments/upload.
 
 ## i18n (TR/EN)
 

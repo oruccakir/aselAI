@@ -81,10 +81,20 @@ export function AppSidebar({ user }: { user: AppUser | undefined }) {
       }
     );
 
-    // TODO(ACP): delete all chats through the agent backend (needs a
-    // session/delete ACP method on the Hermes side).
-
-    toast.success(dict.sidebar.allChatsDeleted);
+    toast.promise(
+      fetch(`/api/history?agent=${encodeURIComponent(currentAgentId)}`, {
+        method: "DELETE",
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(dict.sidebar.deleteAllChatsFailed);
+        }
+      }),
+      {
+        error: dict.sidebar.deleteAllChatsFailed,
+        loading: dict.sidebar.deletingAllChats,
+        success: dict.sidebar.allChatsDeleted,
+      }
+    );
   }, [mutate, router, currentAgentId, dict]);
 
   return (
